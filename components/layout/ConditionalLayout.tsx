@@ -1,0 +1,74 @@
+"use client";
+
+import { usePathname } from "next/navigation";
+import { Navbar } from "@/components/layout/Navbar";
+import dynamic from "next/dynamic";
+import { useEffect } from "react";
+import { ActivationHeader } from "@/components/activation/ActivationHeader";
+import { ActivationFooter } from "@/components/activation/ActivationFooter";
+import { isEmployeeWorkspaceRoute } from "@/lib/routes/application-shell";
+
+const Footer = dynamic(() => import("@/components/layout/Footer").then(mod => mod.Footer), {
+  ssr: true,
+});
+
+
+export function ConditionalLayout({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
+  
+  // Detect if we are in a dashboard or demo
+  const isDashboard = pathname?.includes("/admin") || pathname?.includes("/client");
+  const isDemo = pathname?.includes("/demos");
+
+  const isBlog = pathname?.includes("/blog");
+
+  // Toggle Every.to warm cream reading layout class for blog pages
+  useEffect(() => {
+    if (isBlog) {
+      document.documentElement.classList.add("posts-page");
+    } else {
+      document.documentElement.classList.remove("posts-page");
+    }
+    return () => {
+      document.documentElement.classList.remove("posts-page");
+    };
+  }, [isBlog]);
+  const normalizedPath = pathname?.toLowerCase() || "";
+  const isCareersSubdomain = typeof window !== "undefined" && window.location.hostname.startsWith("careers.");
+  const isPortalSubdomain = typeof window !== "undefined" && (window.location.hostname.startsWith("portal.") || window.location.hostname.startsWith("client."));
+  const hasCallback = typeof window !== "undefined" && new URLSearchParams(window.location.search).has("callbackUrl");
+  const isAuthPage = (normalizedPath.includes("/login") || 
+                      normalizedPath.includes("/register") || 
+                      normalizedPath.includes("/signup")) && 
+                      (isPortalSubdomain || hasCallback);
+  const isCareersPage = normalizedPath.includes("/careers") || isCareersSubdomain;
+  const isCoursesPage = normalizedPath.includes("/courses");
+  const isWishGame = normalizedPath.includes("/wish-game");
+  const isArchitecture = normalizedPath.includes("/architecture");
+  const isDocumentAssessment = normalizedPath === "/onboarding";
+  const isActivation = normalizedPath.startsWith("/activate/");
+  const isHealthcareAuth = normalizedPath === "/h" || normalizedPath.startsWith("/h/");
+  const isEmployeeWorkspace = isEmployeeWorkspaceRoute(normalizedPath);
+  
+  const isCheckoutPage = normalizedPath.includes("/checkout");
+  const isContactPage = normalizedPath === "/contact" || normalizedPath.startsWith("/contact");
+  
+  // Document-mode routes supply their own formal header and footer.
+  if (isActivation) {
+    return <div className="flex min-h-dvh flex-col bg-white text-slate-900"><ActivationHeader/><main className="flex-1">{children}</main><ActivationFooter/></div>;
+  }
+
+  if (isHealthcareAuth || isEmployeeWorkspace || isDashboard || isDemo || isAuthPage || isCareersPage || isCoursesPage || isWishGame || isArchitecture || isDocumentAssessment || isPortalSubdomain) {
+    return <>{children}</>;
+  }
+
+  return (
+    <>
+      <Navbar />
+      <main className="flex-grow">
+        {children}
+      </main>
+      {!isCheckoutPage && !isContactPage && <Footer />}
+    </>
+  );
+}

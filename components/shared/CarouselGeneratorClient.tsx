@@ -1,0 +1,3616 @@
+"use client";
+
+import React, { useState, useEffect, useRef } from "react";
+import { 
+  Download, 
+  ChevronLeft, 
+  ChevronRight, 
+  Plus, 
+  Trash2, 
+  Settings, 
+  Palette, 
+  Edit3, 
+  RefreshCw, 
+  RotateCw,
+  Sparkles,
+  Check,
+  Info,
+  Type,
+  LayoutGrid,
+  Upload,
+  Film,
+  Video
+} from "lucide-react";
+
+const BotIcon = ({ size = 14, className = "" }: { size?: number; className?: string }) => (
+  <svg 
+    width={size} 
+    height={size} 
+    viewBox="0 0 24 24" 
+    fill="none" 
+    stroke="currentColor" 
+    strokeWidth="2" 
+    strokeLinecap="round" 
+    strokeLinejoin="round" 
+    className={`lucide lucide-bot ${className}`}
+  >
+    <path d="M12 8V4H8" />
+    <rect x="5" y="8" width="14" height="12" rx="2" />
+    <path d="M9 13h.01M15 13h.01" />
+  </svg>
+);
+
+const InstagramIcon = ({ size = 20, className = "", style = {} }: { size?: number; className?: string; style?: React.CSSProperties }) => (
+  <svg 
+    width={size} 
+    height={size} 
+    viewBox="0 0 24 24" 
+    fill="none" 
+    stroke="currentColor" 
+    strokeWidth="2" 
+    strokeLinecap="round" 
+    strokeLinejoin="round" 
+    className={`lucide lucide-instagram ${className}`}
+    style={style}
+  >
+    <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
+    <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+    <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+  </svg>
+);
+import { Button } from "@/components/ui/Button";
+import { toast } from "sonner";
+
+const isVideoMedia = (url?: string) => {
+  if (!url) return false;
+  return url.startsWith("data:video/") || url.endsWith(".mp4") || url.endsWith(".webm") || url.endsWith(".mov") || url.endsWith(".ogg");
+};
+
+const stripHtmlTags = (text?: string) => {
+  if (!text) return "";
+  return text.replace(/<[^>]*>/g, "");
+};
+
+const renderFormattedText = (text?: string) => {
+  if (!text) return "";
+  return <span dangerouslySetInnerHTML={{ __html: text }} />;
+};
+
+const getAiNewsTypography = (titleText: string, subtitleText: string, scale = 1.0) => {
+  const rawTitle = stripHtmlTags(titleText || "");
+  const rawSub = stripHtmlTags(subtitleText || "");
+  
+  let headlineSize = Math.round(44 * scale);
+  let headlineLineHeight = 1.08;
+  
+  if (rawTitle.length > 70) {
+    headlineSize = Math.round(38 * scale);
+    headlineLineHeight = 1.05;
+  } else if (rawTitle.length > 45) {
+    headlineSize = Math.round(41 * scale);
+    headlineLineHeight = 1.06;
+  }
+  
+  let bodySize = Math.round(22 * scale);
+  let bodyLineHeight = 1.5;
+  
+  if (rawSub.length > 250) {
+    bodySize = Math.round(18 * scale);
+    bodyLineHeight = 1.35;
+  } else if (rawSub.length > 140) {
+    bodySize = Math.round(20 * scale);
+    bodyLineHeight = 1.4;
+  }
+  
+  return {
+    headlineSize,
+    headlineLineHeight,
+    bodySize,
+    bodyLineHeight
+  };
+};
+
+const renderInteractiveElementMarkup = (slide: Slide, scale = 1.0, theme = "ainews") => {
+  if (!slide.interactiveType || slide.interactiveType === "none") return null;
+
+  // Accents & borders matching theme aesthetics
+  let accentColor = "#0075de";
+  let borderColor = "rgba(255, 255, 255, 0.12)";
+  let bgGradient = "rgba(255, 255, 255, 0.03)";
+  
+  if (theme === "cream") {
+    accentColor = "#78350f"; // Amber/brown accent for warm cream theme
+    borderColor = "rgba(0, 0, 0, 0.08)";
+    bgGradient = "rgba(0, 0, 0, 0.015)";
+  } else if (theme === "emerald") {
+    accentColor = "#10b981";
+    borderColor = "rgba(16, 185, 129, 0.15)";
+    bgGradient = "rgba(16, 185, 129, 0.02)";
+  } else if (theme === "cyberpunk") {
+    accentColor = "#facc15";
+    borderColor = "rgba(250, 204, 21, 0.2)";
+    bgGradient = "rgba(250, 204, 21, 0.03)";
+  } else if (theme === "gold") {
+    accentColor = "#fbbf24";
+    borderColor = "rgba(251, 191, 36, 0.2)";
+    bgGradient = "rgba(251, 191, 36, 0.03)";
+  }
+
+  if (theme === "ainews") {
+    accentColor = "#000000";
+    borderColor = "#e5e7eb";
+    bgGradient = "#f9fafb";
+  }
+
+  if (slide.interactiveType === "button") {
+    const isAiNews = theme === "ainews";
+    return (
+      <div style={{ marginTop: `${Math.round(20 * scale)}px`, display: "flex", flexWrap: "wrap", gap: `${Math.round(10 * scale)}px` }}>
+        <div 
+          style={{ 
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: `${Math.round(6 * scale)}px ${Math.round(14 * scale)}px`,
+            borderRadius: `${Math.round(8 * scale)}px`,
+            border: isAiNews ? "none" : `1px solid ${accentColor}`,
+            background: isAiNews ? "#f3f4f6" : bgGradient,
+            color: isAiNews ? "#374151" : accentColor,
+            fontSize: `${Math.max(Math.round(11 * scale), 8.5)}px`,
+            fontWeight: 600,
+            fontFamily: isAiNews ? "'SF Mono', 'Fira Code', monospace" : "inherit",
+            cursor: "pointer",
+            boxShadow: isAiNews ? "none" : "0 1px 2px rgba(0, 0, 0, 0.05)"
+          }}
+        >
+          {slide.interactiveLabel || "Learn More"}
+        </div>
+      </div>
+    );
+  }
+
+  if (slide.interactiveType === "card") {
+    const isAiNews = theme === "ainews";
+    const labels = (slide.interactiveLabel || "").split(",").map(s => s.trim()).filter(Boolean);
+    
+    if (isAiNews && labels.length > 0) {
+      return (
+        <div style={{ marginTop: `${Math.round(20 * scale)}px`, display: "flex", flexWrap: "wrap", gap: `${Math.round(10 * scale)}px` }}>
+          {labels.map((lbl, idx) => (
+            <div 
+              key={idx}
+              style={{ 
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                padding: `${Math.round(6 * scale)}px ${Math.round(14 * scale)}px`,
+                borderRadius: `${Math.round(8 * scale)}px`,
+                background: "#f3f4f6",
+                color: "#374151",
+                fontSize: `${Math.max(Math.round(11 * scale), 8.5)}px`,
+                fontWeight: 600,
+                fontFamily: "'SF Mono', 'Fira Code', monospace"
+              }}
+            >
+              {lbl}
+            </div>
+          ))}
+        </div>
+      );
+    }
+
+    return (
+      <div 
+        style={{ 
+          marginTop: `${Math.round(16 * scale)}px`,
+          width: "100%",
+          textAlign: "left",
+          padding: `${Math.round(10 * scale)}px ${Math.round(12 * scale)}px`,
+          borderRadius: `${Math.round(12 * scale)}px`,
+          border: `1px solid ${borderColor}`,
+          background: bgGradient,
+          boxSizing: "border-box"
+        }}
+      >
+        <div 
+          style={{ 
+            fontSize: `${Math.max(Math.round(12 * scale), 9.5)}px`,
+            fontWeight: 800,
+            lineHeight: 1.2,
+            marginBottom: slide.interactiveSubtext ? `${Math.round(4 * scale)}px` : "0px"
+          }}
+        >
+          {slide.interactiveLabel || "Card Title"}
+        </div>
+        {slide.interactiveSubtext && (
+          <div 
+            style={{ 
+              fontSize: `${Math.max(Math.round(10 * scale), 8.5)}px`,
+              fontWeight: 500,
+              lineHeight: 1.3,
+              opacity: 0.8
+            }}
+          >
+            {slide.interactiveSubtext}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  return null;
+};
+
+interface Slide {
+  title: string;
+  subtitle: string;
+  bullets: string[];
+  layout: "title-only" | "bullets" | "quote" | "cta";
+  quoteAuthor?: string;
+  imageEnabled?: boolean;
+  imagePrompt?: string;
+  svgCode?: string;
+  imageLayout?: "split-right" | "split-left" | "centered";
+  customImage?: string;
+  customVideo?: string;
+  categoryTag?: string;
+  visualMediaCardTitle?: string;
+  visualMediaCardSub?: string;
+  visualMediaCardChartType?: "logo" | "leaderboard" | "cost" | "architecture" | "roofline" | "none";
+  interactiveType?: "none" | "button" | "card";
+  interactiveLabel?: string;
+  interactiveSubtext?: string;
+}
+
+const KIMI_K3_PRESET_SLIDES: Slide[] = [
+  {
+    title: "Moonshot built the world's largest open model",
+    subtitle: "Kimi K3 is a 2.8 trillion parameter Mixture-of-Experts model, the largest open-weight AI system ever released. It runs a 1M token context, handles text and images, and lands close to the Western frontier.",
+    bullets: [],
+    layout: "title-only",
+    categoryTag: "AI NEWS",
+    visualMediaCardTitle: "Moonshot AI | Kimi K3",
+    visualMediaCardChartType: "logo"
+  },
+  {
+    title: "Kimi K3: Open Frontier Intelligence",
+    subtitle: "Maxed out on thinking effort, Kimi K3 places third on the GDPval agent board, behind Fable 5 and GPT 5.6 Sol but ahead of Opus 4.8, GLM 5.2 and GPT 5.5.\n\nOn AA Briefcase it climbs to second, trailing only Anthropic's Fable 5.",
+    bullets: [],
+    layout: "title-only",
+    categoryTag: "AI NEWS",
+    visualMediaCardChartType: "leaderboard"
+  },
+  {
+    title: "Frontier scores, a fraction of the cost",
+    subtitle: "On BrowseComp, Kimi K3 reaches roughly 91% at about $2 per task. The closed models it matches, from Claude and GPT, cost several times more to hit the same scores.\n\nRunning cheap is the whole promise of open weights.",
+    bullets: [],
+    layout: "title-only",
+    categoryTag: "AI NEWS",
+    visualMediaCardChartType: "cost"
+  },
+  {
+    title: "Architecture",
+    subtitle: "Kimi K3 runs a Mixture-of-Experts design with 896 experts, only 16 active per request. New Kimi Delta Attention and Attention Residuals lift scaling efficiency about 2.5 times over Kimi K2.\n\nOn the AttnRes GPU kernel it edged out Fable 5, a 59.7% speedup versus 57.1% over the Triton baseline.",
+    bullets: [],
+    layout: "title-only",
+    categoryTag: "AI NEWS",
+    visualMediaCardChartType: "architecture"
+  },
+  {
+    title: "The gap keeps closing",
+    subtitle: "Kimi K3 arrived a month after the US pulled Anthropic's Fable and Mythos models. Moonshot is now raising at a reported $31.5 billion valuation.\n\nThe catch: at 2.8 trillion parameters, hosting it yourself needs hundreds of thousands of dollars of hardware.",
+    bullets: [],
+    layout: "title-only",
+    categoryTag: "AI NEWS",
+    visualMediaCardChartType: "roofline"
+  }
+];
+
+const GROWX_LABS_PRESET_SLIDES: Slide[] = [
+  {
+    title: "5 AI Systems to Scale Your Business in 2026",
+    subtitle: "GrowXLabs automated engineering pipeline eliminates manual overhead. Here is how top tech companies deploy AI agents to handle lead scraping, contract processing, and client onboarding.",
+    bullets: [],
+    layout: "title-only",
+    categoryTag: "GROWX INSIGHTS",
+    visualMediaCardTitle: "GrowXLabs | Enterprise Operating System",
+    visualMediaCardChartType: "logo"
+  },
+  {
+    title: "Autonomous Lead Scraping & Enrichment",
+    subtitle: "Our CRM agents continuously scan B2B buyers, score intent metrics, and enrich target profiles automatically without human intervention.",
+    bullets: [],
+    layout: "title-only",
+    categoryTag: "GROWX INSIGHTS",
+    visualMediaCardChartType: "leaderboard"
+  },
+  {
+    title: "10x Revenue Velocity at 1/5th the Cost",
+    subtitle: "Replacing manual sales reps with custom AI workflows delivers 90%+ score efficiency at a fraction of traditional operational expenses.",
+    bullets: [],
+    layout: "title-only",
+    categoryTag: "GROWX INSIGHTS",
+    visualMediaCardChartType: "cost"
+  },
+  {
+    title: "Multi-Agent System Architecture",
+    subtitle: "GrowXLabs orchestrates specialized subagents (Research, Security, Sales, DevOps) with shared memory buffers and real-time execution kernels.",
+    bullets: [],
+    layout: "title-only",
+    categoryTag: "GROWX INSIGHTS",
+    visualMediaCardChartType: "architecture"
+  },
+  {
+    title: "Deploy Production AI Today",
+    subtitle: "Ready to scale your software product? Let our AI engineers build custom enterprise pipelines tailored to your business goals.",
+    bullets: [],
+    layout: "title-only",
+    categoryTag: "GROWX INSIGHTS",
+    visualMediaCardChartType: "roofline"
+  }
+];
+
+const DEFAULT_SLIDES: Slide[] = GROWX_LABS_PRESET_SLIDES;
+
+function parsePartialSlides(partialJson: string): { themeSuggestion?: string; slides: any[] } {
+  let themeSuggestion: string | undefined = undefined;
+  
+  // Try to extract themeSuggestion
+  const themeMatch = /"themeSuggestion"\s*:\s*"([^"]+)"/.exec(partialJson);
+  if (themeMatch) {
+    themeSuggestion = themeMatch[1];
+  }
+  
+  const slides: any[] = [];
+  
+  // Find "slides" array
+  const slidesStartIndex = partialJson.indexOf('"slides"');
+  if (slidesStartIndex === -1) {
+    return { themeSuggestion, slides };
+  }
+  
+  const arrayStartIndex = partialJson.indexOf('[', slidesStartIndex);
+  if (arrayStartIndex === -1) {
+    return { themeSuggestion, slides };
+  }
+  
+  let braceCount = 0;
+  let objectStart = -1;
+  let inString = false;
+  let escape = false;
+  
+  for (let i = arrayStartIndex + 1; i < partialJson.length; i++) {
+    const char = partialJson[i];
+    
+    if (escape) {
+      escape = false;
+      continue;
+    }
+    if (char === '\\') {
+      escape = true;
+      continue;
+    }
+    if (char === '"') {
+      inString = !inString;
+      continue;
+    }
+    
+    if (!inString) {
+      if (char === '{') {
+        if (braceCount === 0) {
+          objectStart = i;
+        }
+        braceCount++;
+      } else if (char === '}') {
+        braceCount--;
+        if (braceCount === 0 && objectStart !== -1) {
+          const objStr = partialJson.substring(objectStart, i + 1);
+          try {
+            const parsedObj = JSON.parse(objStr);
+            if (parsedObj && typeof parsedObj.title === 'string') {
+              slides.push(parsedObj);
+            }
+          } catch (e) {
+            // Not finished or valid
+          }
+        }
+      } else if (char === ']') {
+        if (braceCount === 0) {
+          break;
+        }
+      }
+    }
+  }
+  
+  return { themeSuggestion, slides };
+}
+
+export function CarouselGeneratorClient() {
+  const [topic, setTopic] = useState("");
+  const [tone, setTone] = useState("Professional");
+  const [slideCount, setSlideCount] = useState(5);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [slides, setSlides] = useState<Slide[]>(DEFAULT_SLIDES);
+  const [activeIndex, setActiveIndex] = useState(0);
+  
+  // Customization settings
+  const [theme, setTheme] = useState<"cyberpunk" | "cream" | "sunset" | "terminal" | "glass" | "emerald" | "minimal" | "gold" | "ainews">("ainews");
+  const [bgPattern, setBgPattern] = useState<"none" | "grid" | "dots" | "glow" | "isometric" | "waves" | "hexagons">("none");
+  const [brandName, setBrandName] = useState("GrowXLabs");
+  const [instagramHandle, setInstagramHandle] = useState("@growxlabs.tech");
+  const [showHandle, setShowHandle] = useState(false);
+  const [showPageNumber, setShowPageNumber] = useState(true);
+  const [showProgressBar, setShowProgressBar] = useState(true);
+  const [activeTab, setActiveTab] = useState<"ai" | "edit" | "design">("ai");
+  const [refinementPrompt, setRefinementPrompt] = useState("");
+  const [isRefining, setIsRefining] = useState(false);
+  const [streamBuffer, setStreamBuffer] = useState("");
+  const [aspectRatio, setAspectRatio] = useState<"3:4" | "4:5" | "1:1" | "1.91:1">("4:5");
+  const [visualMode, setVisualMode] = useState<"svg" | "image">("image");
+  const [isGeneratingImage, setIsGeneratingImage] = useState(false);
+
+  const loadGrowXLabsPreset = (presetType: "insights" | "kimi" = "insights") => {
+    if (presetType === "kimi") {
+      setSlides(KIMI_K3_PRESET_SLIDES);
+    } else {
+      setSlides(GROWX_LABS_PRESET_SLIDES);
+    }
+    setTheme("ainews");
+    setAspectRatio("4:5");
+    setBrandName("GrowXLabs");
+    setInstagramHandle("@growxlabs.tech");
+    setShowHandle(false);
+    setShowPageNumber(true);
+    setActiveIndex(0);
+    toast.success("Loaded GrowXLabs Editorial Carousel Preset!");
+  };
+
+  // Dynamic responsive scaling states & ref
+  const previewRef = useRef<HTMLDivElement>(null);
+  const [responsiveScale, setResponsiveScale] = useState(1);
+
+  // Swipe gesture navigation states
+  const [touchStart, setTouchStart] = useState<number | null>(null);
+  const [touchEnd, setTouchEnd] = useState<number | null>(null);
+  const minSwipeDistance = 50;
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    
+    const updateScale = () => {
+      if (previewRef.current) {
+        const width = previewRef.current.offsetWidth;
+        if (width > 0) {
+          setResponsiveScale(width / 338);
+        }
+      }
+    };
+
+    updateScale();
+
+    let resizeObserver: ResizeObserver | null = null;
+    if (previewRef.current && typeof ResizeObserver !== "undefined") {
+      resizeObserver = new ResizeObserver(() => {
+        updateScale();
+      });
+      resizeObserver.observe(previewRef.current);
+    }
+
+    window.addEventListener("resize", updateScale);
+    return () => {
+      if (resizeObserver) {
+        resizeObserver.disconnect();
+      }
+      window.removeEventListener("resize", updateScale);
+    };
+  }, []);
+
+  const onTouchStart = (e: React.TouchEvent) => {
+    setTouchEnd(null);
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const onTouchMove = (e: React.TouchEvent) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+  };
+
+  const onTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > minSwipeDistance;
+    const isRightSwipe = distance < -minSwipeDistance;
+
+    if (isLeftSwipe && activeIndex < slides.length - 1) {
+      setActiveIndex(activeIndex + 1);
+    } else if (isRightSwipe && activeIndex > 0) {
+      setActiveIndex(activeIndex - 1);
+    }
+  };
+
+  const getDimensions = () => {
+    switch (aspectRatio) {
+      case "3:4": return { width: 1080, height: 1440 };
+      case "4:5": return { width: 1080, height: 1350 };
+      case "1.91:1": return { width: 1080, height: 566 };
+      case "1:1":
+      default:
+        return { width: 1080, height: 1080 };
+    }
+  };
+  const { width: svgWidth, height: svgHeight } = getDimensions();
+
+  const getAspectClass = () => {
+    switch (aspectRatio) {
+      case "3:4": return "aspect-[3/4]";
+      case "4:5": return "aspect-[4/5]";
+      case "1.91:1": return "aspect-[1.91/1]";
+      case "1:1":
+      default:
+        return "aspect-[1/1]";
+    }
+  };
+
+  const getScaleMultiplier = () => {
+    switch (aspectRatio) {
+      case "3:4":
+      case "4:5":
+        return 1.0;
+      case "1:1":
+        return 0.85;
+      case "1.91:1":
+        return 0.55;
+      default:
+        return 1.0;
+    }
+  };
+  const scaleMultiplier = getScaleMultiplier();
+  const liveScaleMultiplier = scaleMultiplier * responsiveScale;
+
+
+  // Auto-scroll the live token terminal to the bottom
+  React.useEffect(() => {
+    const terminals = document.querySelectorAll(".custom-scrollbar");
+    terminals.forEach(term => {
+      term.scrollTop = term.scrollHeight;
+    });
+  }, [streamBuffer]);
+
+  // Get active slide
+  const activeSlide = slides[activeIndex] || slides[0] || {
+    title: "",
+    subtitle: "",
+    bullets: [],
+    layout: "title-only"
+  };
+
+  // Update active slide field
+  const updateActiveSlide = (updatedFields: Partial<Slide>) => {
+    const newSlides = [...slides];
+    newSlides[activeIndex] = { ...activeSlide, ...updatedFields };
+    setSlides(newSlides);
+  };
+
+  // Helper to dynamically insert bold/italic/underline HTML tags based on user selection
+  const handleFormatText = (field: "title" | "subtitle", tag: "strong" | "em" | "u") => {
+    const elementId = field === "title" ? "slide-editor-title" : "slide-editor-subtitle";
+    const element = document.getElementById(elementId) as HTMLInputElement | HTMLTextAreaElement | null;
+    if (!element) return;
+
+    const start = element.selectionStart;
+    const end = element.selectionEnd;
+    if (start === null || end === null) return;
+
+    const text = field === "title" ? activeSlide.title : activeSlide.subtitle;
+    const selectedText = text.substring(start, end);
+    const formattedText = `<${tag}>${selectedText}</${tag}>`;
+    const newText = text.substring(0, start) + formattedText + text.substring(end);
+
+    updateActiveSlide({ [field]: newText });
+
+    // Refocus and restore cursor selection after state updates
+    setTimeout(() => {
+      element.focus();
+      element.setSelectionRange(start + tag.length + 2, start + tag.length + 2 + selectedText.length);
+    }, 10);
+  };
+
+  // Add bullet to active slide
+  const addBullet = () => {
+    if (activeSlide.bullets.length >= 3) {
+      toast.warning("Maximum of 3 bullet points per slide is recommended for Instagram readability.");
+      return;
+    }
+    updateActiveSlide({
+      bullets: [...activeSlide.bullets, "New bullet point"]
+    });
+  };
+
+  // Remove bullet from active slide
+  const removeBullet = (indexToRemove: number) => {
+    updateActiveSlide({
+      bullets: activeSlide.bullets.filter((_, idx) => idx !== indexToRemove)
+    });
+  };
+
+  // Update specific bullet text
+  const updateBulletText = (idx: number, newText: string) => {
+    const newBullets = [...activeSlide.bullets];
+    newBullets[idx] = newText;
+    updateActiveSlide({ bullets: newBullets });
+  };
+
+  // Add a new slide manually
+  const addNewSlide = () => {
+    const newSlide: Slide = {
+      title: "New Slide Header",
+      subtitle: "Brief description text",
+      bullets: ["First point", "Second point"],
+      layout: "bullets"
+    };
+    setSlides([...slides, newSlide]);
+    setActiveIndex(slides.length);
+    toast.success("New slide added at the end.");
+  };
+
+  // Delete current slide
+  const deleteCurrentSlide = () => {
+    if (slides.length <= 2) {
+      toast.error("A carousel requires at least 2 slides.");
+      return;
+    }
+    const newSlides = slides.filter((_, idx) => idx !== activeIndex);
+    setSlides(newSlides);
+    setActiveIndex(Math.max(0, activeIndex - 1));
+    toast.success("Slide deleted.");
+  };
+
+  // Call API to generate carousel content
+  const handleGenerateCarousel = async () => {
+    if (!topic.trim()) {
+      toast.error("Please enter a topic first.");
+      return;
+    }
+
+    setIsGenerating(true);
+    setStreamBuffer("");
+    const apiToast = toast.loading("AI is planning and generating your carousel slides...");
+
+    try {
+      const response = await fetch("/api/generate-carousel", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ topic, tone, slideCount }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `Failed to generate: ${response.statusText}`);
+      }
+
+      let reader = null;
+      try {
+        reader = response.body ? response.body.getReader() : null;
+      } catch (err) {
+        console.warn("Streaming reader not available, falling back to full text reading:", err);
+      }
+
+      if (!reader) {
+        const text = await response.text();
+        setStreamBuffer(text);
+        const finalData = JSON.parse(text);
+        if (finalData.slides && finalData.slides.length > 0) {
+          setSlides(finalData.slides);
+          setActiveIndex(0);
+          if (finalData.themeSuggestion) {
+            setTheme(finalData.themeSuggestion);
+          }
+        }
+      } else {
+        const decoder = new TextDecoder();
+        let done = false;
+        let buffer = "";
+
+        while (!done) {
+          const { value, done: doneReading } = await reader.read();
+          done = doneReading;
+          if (value) {
+            const chunk = decoder.decode(value, { stream: !done });
+            buffer += chunk;
+            setStreamBuffer(buffer);
+            
+            const parsed = parsePartialSlides(buffer);
+            if (parsed.slides && parsed.slides.length > 0) {
+              setSlides(parsed.slides);
+              if (parsed.themeSuggestion && ["cyberpunk", "cream", "sunset", "terminal", "glass", "emerald", "minimal", "gold"].includes(parsed.themeSuggestion)) {
+                setTheme(parsed.themeSuggestion as any);
+              }
+            }
+          }
+        }
+
+        // Try final full parse
+        try {
+          const finalData = JSON.parse(buffer);
+          if (finalData.slides && finalData.slides.length > 0) {
+            setSlides(finalData.slides);
+            setActiveIndex(0);
+            if (finalData.themeSuggestion) {
+              setTheme(finalData.themeSuggestion);
+            }
+          }
+        } catch (e) {
+          console.warn("Could not parse final buffer as JSON:", e);
+        }
+      }
+
+      toast.success("Carousel generated successfully!", { id: apiToast });
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err.message || "Something went wrong while generating.", { id: apiToast });
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const getGraphicType = (slide: Slide) => {
+    if (!slide.customImage) return "svg";
+    if (slide.customImage.startsWith("data:")) return "upload";
+    return "ai-image";
+  };
+
+  const handleGenerateAIImage = async () => {
+    if (!activeSlide) return;
+    const prompt = stripHtmlTags(activeSlide.imagePrompt || activeSlide.title || "Graphic");
+    setIsGeneratingImage(true);
+    const imageToast = toast.loading("Generating AI image from prompt...");
+
+    try {
+      const pollinationsUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=500&height=500&nologo=true&model=flux`;
+      
+      // Fetch via local proxy to avoid CORS and convert to base64
+      const proxyUrl = `/api/proxy-image?url=${encodeURIComponent(pollinationsUrl)}`;
+      const response = await fetch(proxyUrl);
+      
+      if (!response.ok) {
+        throw new Error(`Failed to generate image: ${response.statusText}`);
+      }
+      
+      const blob = await response.blob();
+      const base64Data = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      });
+
+      updateActiveSlide({ 
+        customImage: base64Data,
+        imagePrompt: prompt
+      });
+      toast.success("AI image generated and embedded successfully!", { id: imageToast });
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err.message || "Failed to generate AI image.", { id: imageToast });
+    } finally {
+      setIsGeneratingImage(false);
+    }
+  };
+
+  // Call API to refine the carousel content based on instructions (AI Agent loop)
+  const handleRefineCarousel = async () => {
+    if (!refinementPrompt.trim()) {
+      toast.error("Please enter a refinement instruction first.");
+      return;
+    }
+
+    setIsRefining(true);
+    setStreamBuffer("");
+    const refineToast = toast.loading("AI Agent is editing your slides...");
+
+    try {
+      const response = await fetch("/api/generate-carousel", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          topic: topic || slides[0]?.title || "Refinement",
+          slides,
+          instruction: refinementPrompt
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `Failed to refine: ${response.statusText}`);
+      }
+
+      let reader = null;
+      try {
+        reader = response.body ? response.body.getReader() : null;
+      } catch (err) {
+        console.warn("Streaming reader not available during refinement, falling back to full text reading:", err);
+      }
+
+      if (!reader) {
+        const text = await response.text();
+        setStreamBuffer(text);
+        const finalData = JSON.parse(text);
+        if (finalData.slides && finalData.slides.length > 0) {
+          setSlides(finalData.slides);
+          setActiveIndex(0);
+          if (finalData.themeSuggestion) {
+            setTheme(finalData.themeSuggestion);
+          }
+        }
+      } else {
+        const decoder = new TextDecoder();
+        let done = false;
+        let buffer = "";
+
+        while (!done) {
+          const { value, done: doneReading } = await reader.read();
+          done = doneReading;
+          if (value) {
+            const chunk = decoder.decode(value, { stream: !done });
+            buffer += chunk;
+            setStreamBuffer(buffer);
+            
+            const parsed = parsePartialSlides(buffer);
+            if (parsed.slides && parsed.slides.length > 0) {
+              setSlides(parsed.slides);
+              if (parsed.themeSuggestion && ["cyberpunk", "cream", "sunset", "terminal", "glass", "emerald", "minimal", "gold"].includes(parsed.themeSuggestion)) {
+                setTheme(parsed.themeSuggestion as any);
+              }
+            }
+          }
+        }
+
+        // Try final full parse
+        try {
+          const finalData = JSON.parse(buffer);
+          if (finalData.slides && finalData.slides.length > 0) {
+            setSlides(finalData.slides);
+            setActiveIndex(0);
+            if (finalData.themeSuggestion) {
+              setTheme(finalData.themeSuggestion);
+            }
+          }
+        } catch (e) {
+          console.warn("Could not parse final refinement buffer as JSON:", e);
+        }
+      }
+
+      setRefinementPrompt("");
+      toast.success("Slides refined successfully by AI Agent!", { id: refineToast });
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err.message || "Failed to refine slides.", { id: refineToast });
+    } finally {
+      setIsRefining(false);
+    }
+  };
+
+  // Theme-specific styles dictionary (for live preview and SVG export)
+  const getThemeStyles = (slideLayout: string, scale = 1.0) => {
+    const rawStyles = (() => {
+      switch (theme) {
+        case "cyberpunk":
+          return {
+            wrapperBg: "#05050a",
+            wrapperImage: "radial-gradient(circle at 10% 20%, rgba(147, 51, 234, 0.15) 0%, transparent 45%), radial-gradient(circle at 90% 80%, rgba(6, 182, 212, 0.15) 0%, transparent 45%)",
+            brandColor: "#06b6d4",
+            accentColor: "#9333ea",
+            titleColor: "#06b6d4",
+            titleFont: "'Outfit', sans-serif",
+            subtitleColor: "#ffffff",
+            subtitleFont: "'Outfit', sans-serif",
+            bulletColor: "#e2e8f0",
+            bulletIconColor: "#9333ea",
+            quoteBorderColor: "#9333ea",
+            quoteTextColor: "#ffffff",
+            quoteAuthorColor: "#06b6d4",
+            progressBarBg: "rgba(255,255,255,0.05)",
+            wrapper: "background: #05050a; background-image: radial-gradient(circle at 10% 20%, rgba(147, 51, 234, 0.15) 0%, transparent 45%), radial-gradient(circle at 90% 80%, rgba(6, 182, 212, 0.15) 0%, transparent 45%); color: #ffffff; font-family: 'Outfit', sans-serif; position: relative; border: 1px solid rgba(255,255,255,0.05);",
+            title: `color: #06b6d4; text-shadow: 0 0 15px rgba(6, 182, 212, 0.35); font-family: 'Outfit', sans-serif; font-size: ${slideLayout === "title-only" ? "68px" : "48px"}; font-weight: 900; line-height: 1.1; margin-bottom: 24px; text-transform: uppercase; font-style: italic;`,
+            subtitle: "color: #ffffff; font-family: 'Outfit', sans-serif; font-size: 26px; font-weight: 500; opacity: 0.9; line-height: 1.4;",
+            bullets: "color: #e2e8f0; font-family: 'Outfit', sans-serif; font-size: 24px; line-height: 1.6; text-align: left; list-style-type: none; margin-top: 30px;",
+            bulletItem: "margin-bottom: 16px; display: flex; align-items: flex-start; gap: 12px;",
+            bulletIcon: "color: #9333ea; font-weight: bold; margin-top: 2px;",
+            quoteBox: "border-left: 5px solid #9333ea; padding-left: 24px; text-align: left; margin: 40px 0; font-style: italic;",
+            quoteText: "color: #ffffff; font-size: 32px; font-weight: 700; line-height: 1.4; margin-bottom: 12px;",
+            quoteAuthor: "color: #06b6d4; font-size: 20px; font-weight: 600; text-transform: uppercase; tracking-wider;",
+            header: "display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 20px; width: 100%; box-sizing: border-box;",
+            footer: "width: 100%; box-sizing: border-box; display: flex; align-items: center; justify-content: space-between; margin-top: auto;",
+            progressBarContainer: "height: 6px; width: 100%; background: rgba(255,255,255,0.05); position: absolute; bottom: 0; left: 0;",
+            progressBarFill: "height: 100%; background: linear-gradient(90deg, #9333ea, #06b6d4);"
+          };
+        case "cream":
+          return {
+            wrapperBg: "#F9F6F0",
+            wrapperImage: "none",
+            brandColor: "#5c554c",
+            accentColor: "#8c8273",
+            titleColor: "#1c1a17",
+            titleFont: "'Playfair Display', serif",
+            subtitleColor: "#5c554c",
+            subtitleFont: "'Outfit', sans-serif",
+            bulletColor: "#3d3831",
+            bulletIconColor: "#8c8273",
+            quoteBorderColor: "#8c8273",
+            quoteTextColor: "#1c1a17",
+            quoteAuthorColor: "#5c554c",
+            progressBarBg: "rgba(0,0,0,0.04)",
+            wrapper: "background: #F9F6F0; color: #1c1a17; font-family: 'Outfit', sans-serif; position: relative;",
+            title: `color: #1c1a17; font-family: 'Playfair Display', serif; font-size: ${slideLayout === "title-only" ? "64px" : "46px"}; font-weight: 700; line-height: 1.2; margin-bottom: 24px;`,
+            subtitle: "color: #5c554c; font-family: 'Outfit', sans-serif; font-size: 24px; font-weight: 400; line-height: 1.5;",
+            bullets: "color: #3d3831; font-family: 'Outfit', sans-serif; font-size: 22px; line-height: 1.6; text-align: left; list-style-type: none; margin-top: 30px;",
+            bulletItem: "margin-bottom: 16px; display: flex; align-items: flex-start; gap: 12px;",
+            bulletIcon: "color: #8c8273; margin-top: 2px;",
+            quoteBox: "border-left: 4px solid #8c8273; padding-left: 24px; text-align: left; margin: 40px 0;",
+            quoteText: "color: #1c1a17; font-family: 'Playfair Display', serif; font-size: 32px; font-weight: 600; line-height: 1.4; margin-bottom: 12px; font-style: italic;",
+            quoteAuthor: "color: #5c554c; font-size: 18px; font-weight: 500; tracking-wider;",
+            header: "display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(0,0,0,0.06); padding-bottom: 20px; width: 100%; box-sizing: border-box;",
+            footer: "width: 100%; box-sizing: border-box; display: flex; align-items: center; justify-content: space-between; margin-top: auto;",
+            progressBarContainer: "height: 6px; width: 100%; background: rgba(0,0,0,0.04); position: absolute; bottom: 0; left: 0;",
+            progressBarFill: "height: 100%; background: #5c554c;"
+          };
+        case "sunset":
+          return {
+            wrapperBg: "none",
+            wrapperImage: "linear-gradient(135deg, #FF512F 0%, #DD2476 100%)",
+            brandColor: "#ffffff",
+            accentColor: "#ffffff",
+            titleColor: "#ffffff",
+            titleFont: "'Outfit', sans-serif",
+            subtitleColor: "rgba(255,255,255,0.9)",
+            subtitleFont: "'Outfit', sans-serif",
+            bulletColor: "#ffffff",
+            bulletIconColor: "#ffffff",
+            quoteBorderColor: "rgba(255,255,255,0.6)",
+            quoteTextColor: "#ffffff",
+            quoteAuthorColor: "rgba(255,255,255,0.8)",
+            progressBarBg: "rgba(255,255,255,0.15)",
+            wrapper: "background: linear-gradient(135deg, #FF512F 0%, #DD2476 100%); color: #ffffff; font-family: 'Outfit', sans-serif; position: relative;",
+            title: `color: #ffffff; font-family: 'Outfit', sans-serif; font-size: ${slideLayout === "title-only" ? "70px" : "48px"}; font-weight: 900; line-height: 1.1; margin-bottom: 24px; text-shadow: 0 4px 12px rgba(0,0,0,0.15);`,
+            subtitle: "color: rgba(255,255,255,0.9); font-family: 'Outfit', sans-serif; font-size: 26px; font-weight: 500; line-height: 1.4; text-shadow: 0 2px 6px rgba(0,0,0,0.1);",
+            bullets: "color: #ffffff; font-family: 'Outfit', sans-serif; font-size: 24px; line-height: 1.6; text-align: left; list-style-type: none; margin-top: 30px;",
+            bulletItem: "margin-bottom: 16px; display: flex; align-items: flex-start; gap: 12px; text-shadow: 0 2px 4px rgba(0,0,0,0.1);",
+            bulletIcon: "color: #ffffff; font-weight: bold; margin-top: 2px;",
+            quoteBox: "border-left: 4px solid rgba(255,255,255,0.6); padding-left: 24px; text-align: left; margin: 40px 0; font-style: italic;",
+            quoteText: "color: #ffffff; font-size: 32px; font-weight: 700; line-height: 1.4; margin-bottom: 12px; text-shadow: 0 4px 8px rgba(0,0,0,0.1);",
+            quoteAuthor: "color: rgba(255,255,255,0.8); font-size: 18px; font-weight: 600; text-transform: uppercase; tracking-wider;",
+            header: "display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.15); padding-bottom: 20px; width: 100%; box-sizing: border-box;",
+            footer: "width: 100%; box-sizing: border-box; display: flex; align-items: center; justify-content: space-between; margin-top: auto;",
+            progressBarContainer: "height: 6px; width: 100%; background: rgba(255,255,255,0.15); position: absolute; bottom: 0; left: 0;",
+            progressBarFill: "height: 100%; background: #ffffff;"
+          };
+        case "terminal":
+          return {
+            wrapperBg: "#090c0f",
+            wrapperImage: "linear-gradient(rgba(24, 33, 44, 0.6) 1px, transparent 1px), linear-gradient(90deg, rgba(24, 33, 44, 0.6) 1px, transparent 1px)",
+            brandColor: "#39ff14",
+            accentColor: "#8892b0",
+            titleColor: "#39ff14",
+            titleFont: "'Fira Code', monospace",
+            subtitleColor: "#8892b0",
+            subtitleFont: "'Fira Code', monospace",
+            bulletColor: "#a8b2d1",
+            bulletIconColor: "#39ff14",
+            quoteBorderColor: "#39ff14",
+            quoteTextColor: "#39ff14",
+            quoteAuthorColor: "#8892b0",
+            progressBarBg: "#18212c",
+            wrapper: "background: #090c0f; background-image: linear-gradient(rgba(24, 33, 44, 0.6) 1px, transparent 1px), linear-gradient(90deg, rgba(24, 33, 44, 0.6) 1px, transparent 1px); background-size: 40px 40px; color: #39ff14; font-family: 'Fira Code', monospace; position: relative; border: 1px solid #18212c;",
+            title: `color: #39ff14; font-family: 'Fira Code', monospace; font-size: ${slideLayout === "title-only" ? "54px" : "40px"}; font-weight: 700; line-height: 1.3; margin-bottom: 24px; text-align: left; width: 100%;`,
+            subtitle: "color: #8892b0; font-family: 'Fira Code', monospace; font-size: 22px; line-height: 1.5; text-align: left; width: 100%;",
+            bullets: "color: #a8b2d1; font-family: 'Fira Code', monospace; font-size: 20px; line-height: 1.6; text-align: left; list-style-type: none; margin-top: 30px; width: 100%;",
+            bulletItem: "margin-bottom: 16px; display: flex; align-items: flex-start; gap: 12px;",
+            bulletIcon: "color: #39ff14; margin-top: 4px; font-weight: bold;",
+            quoteBox: "border-left: 3px solid #39ff14; padding-left: 20px; text-align: left; margin: 40px 0; width: 100%;",
+            quoteText: "color: #39ff14; font-size: 26px; font-weight: 700; line-height: 1.4; margin-bottom: 12px;",
+            quoteAuthor: "color: #8892b0; font-size: 16px;",
+            header: "display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #18212c; padding-bottom: 20px; width: 100%; box-sizing: border-box;",
+            footer: "width: 100%; box-sizing: border-box; display: flex; align-items: center; justify-content: space-between; margin-top: auto;",
+            progressBarContainer: "height: 6px; width: 100%; background: #18212c; position: absolute; bottom: 0; left: 0;",
+            progressBarFill: "height: 100%; background: #39ff14;"
+          };
+        case "glass":
+          return {
+            wrapperBg: "#03001e",
+            wrapperImage: "radial-gradient(circle at 50% 50%, #4a0072 0%, #03001e 85%)",
+            brandColor: "#a5f3fc",
+            accentColor: "#c084fc",
+            titleColor: "#ffffff",
+            titleFont: "'Outfit', sans-serif",
+            subtitleColor: "#a5f3fc",
+            subtitleFont: "'Outfit', sans-serif",
+            bulletColor: "#e2e8f0",
+            bulletIconColor: "#c084fc",
+            quoteBorderColor: "#c084fc",
+            quoteTextColor: "#ffffff",
+            quoteAuthorColor: "#a5f3fc",
+            progressBarBg: "rgba(255,255,255,0.05)",
+            wrapper: "background: #03001e; background-image: radial-gradient(circle at 50% 50%, #4a0072 0%, #03001e 85%); color: #ffffff; font-family: 'Outfit', sans-serif; position: relative;",
+            title: `color: #ffffff; font-family: 'Outfit', sans-serif; font-size: ${slideLayout === "title-only" ? "62px" : "44px"}; font-weight: 800; line-height: 1.2; margin-bottom: 24px;`,
+            subtitle: "color: #a5f3fc; font-family: 'Outfit', sans-serif; font-size: 24px; font-weight: 500; line-height: 1.4; opacity: 0.95;",
+            bullets: "color: #e2e8f0; font-family: 'Outfit', sans-serif; font-size: 22px; line-height: 1.6; text-align: left; list-style-type: none; margin-top: 30px;",
+            bulletItem: "margin-bottom: 14px; display: flex; align-items: flex-start; gap: 12px;",
+            bulletIcon: "color: #c084fc; margin-top: 2px;",
+            quoteBox: "border-left: 4px solid #c084fc; padding-left: 24px; text-align: left; margin: 40px 0;",
+            quoteText: "color: #ffffff; font-size: 28px; font-weight: 700; line-height: 1.4; margin-bottom: 12px; font-style: italic;",
+            quoteAuthor: "color: #a5f3fc; font-size: 18px; font-weight: 600; text-transform: uppercase;",
+            header: "display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 20px; width: 100%; box-sizing: border-box;",
+            footer: "width: 100%; box-sizing: border-box; display: flex; align-items: center; justify-content: space-between; margin-top: auto;",
+            progressBarContainer: "height: 6px; width: 100%; background: rgba(255,255,255,0.05); position: absolute; bottom: 0; left: 0;",
+            progressBarFill: "height: 100%; background: linear-gradient(90deg, #c084fc, #a5f3fc);"
+          };
+        case "emerald":
+          return {
+            wrapperBg: "#041611",
+            wrapperImage: "radial-gradient(circle at 10% 20%, rgba(16, 185, 129, 0.12) 0%, transparent 45%), radial-gradient(circle at 90% 80%, rgba(52, 211, 153, 0.12) 0%, transparent 45%)",
+            brandColor: "#10b981",
+            accentColor: "#34d399",
+            titleColor: "#10b981",
+            titleFont: "'Outfit', sans-serif",
+            subtitleColor: "#ffffff",
+            subtitleFont: "'Outfit', sans-serif",
+            bulletColor: "#e2e8f0",
+            bulletIconColor: "#34d399",
+            quoteBorderColor: "#10b981",
+            quoteTextColor: "#ffffff",
+            quoteAuthorColor: "#34d399",
+            progressBarBg: "rgba(255,255,255,0.03)",
+            wrapper: "background: #041611; background-image: radial-gradient(circle at 10% 20%, rgba(16, 185, 129, 0.12) 0%, transparent 45%), radial-gradient(circle at 90% 80%, rgba(52, 211, 153, 0.12) 0%, transparent 45%); color: #ffffff; font-family: 'Outfit', sans-serif; position: relative;",
+            title: `color: #10b981; text-shadow: 0 0 15px rgba(16, 185, 129, 0.25); font-family: 'Outfit', sans-serif; font-size: ${slideLayout === "title-only" ? "64px" : "44px"}; font-weight: 800; line-height: 1.2; margin-bottom: 24px;`,
+            subtitle: "color: #ffffff; font-family: 'Outfit', sans-serif; font-size: 24px; font-weight: 500; opacity: 0.95; line-height: 1.4;",
+            bullets: "color: #e2e8f0; font-family: 'Outfit', sans-serif; font-size: 22px; line-height: 1.6; text-align: left; list-style-type: none; margin-top: 30px;",
+            bulletItem: "margin-bottom: 14px; display: flex; align-items: flex-start; gap: 12px;",
+            bulletIcon: "color: #34d399; margin-top: 2px;",
+            quoteBox: "border-left: 4px solid #10b981; padding-left: 24px; text-align: left; margin: 40px 0;",
+            quoteText: "color: #ffffff; font-size: 28px; font-weight: 700; line-height: 1.4; margin-bottom: 12px; font-style: italic;",
+            quoteAuthor: "color: #34d399; font-size: 18px; font-weight: 600; text-transform: uppercase;",
+            header: "display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 20px; width: 100%; box-sizing: border-box;",
+            footer: "width: 100%; box-sizing: border-box; display: flex; align-items: center; justify-content: space-between; margin-top: auto;",
+            progressBarContainer: "height: 6px; width: 100%; background: rgba(255,255,255,0.03); position: absolute; bottom: 0; left: 0;",
+            progressBarFill: "height: 100%; background: linear-gradient(90deg, #10b981, #34d399);"
+          };
+        case "minimal":
+          return {
+            wrapperBg: "#ffffff",
+            wrapperImage: "none",
+            brandColor: "#0a0a0a",
+            accentColor: "#404040",
+            titleColor: "#0a0a0a",
+            titleFont: "'Outfit', sans-serif",
+            subtitleColor: "#404040",
+            subtitleFont: "'Outfit', sans-serif",
+            bulletColor: "#171717",
+            bulletIconColor: "#0a0a0a",
+            quoteBorderColor: "#0a0a0a",
+            quoteTextColor: "#0a0a0a",
+            quoteAuthorColor: "#404040",
+            progressBarBg: "rgba(0,0,0,0.05)",
+            wrapper: "background: #ffffff; color: #0a0a0a; font-family: 'Outfit', sans-serif; position: relative; border: 1px solid #e5e5e5;",
+            title: `color: #0a0a0a; font-family: 'Outfit', sans-serif; font-size: ${slideLayout === "title-only" ? "66px" : "46px"}; font-weight: 800; line-height: 1.15; margin-bottom: 24px; letter-spacing: -1px;`,
+            subtitle: "color: #404040; font-family: 'Outfit', sans-serif; font-size: 24px; font-weight: 400; line-height: 1.45;",
+            bullets: "color: #171717; font-family: 'Outfit', sans-serif; font-size: 22px; line-height: 1.6; text-align: left; list-style-type: none; margin-top: 30px;",
+            bulletItem: "margin-bottom: 14px; display: flex; align-items: flex-start; gap: 12px;",
+            bulletIcon: "color: #0a0a0a; margin-top: 2px;",
+            quoteBox: "border-left: 4px solid #0a0a0a; padding-left: 24px; text-align: left; margin: 40px 0;",
+            quoteText: "color: #0a0a0a; font-size: 28px; font-weight: 700; line-height: 1.4; margin-bottom: 12px;",
+            quoteAuthor: "color: #404040; font-size: 18px; font-weight: 600; text-transform: uppercase;",
+            header: "display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #e5e5e5; padding-bottom: 20px; width: 100%; box-sizing: border-box;",
+            footer: "width: 100%; box-sizing: border-box; display: flex; align-items: center; justify-content: space-between; margin-top: auto;",
+            progressBarContainer: "height: 6px; width: 100%; background: rgba(0,0,0,0.05); position: absolute; bottom: 0; left: 0;",
+            progressBarFill: "height: 100%; background: #0a0a0a;"
+          };
+        case "gold":
+          return {
+            wrapperBg: "#0a0907",
+            wrapperImage: "radial-gradient(circle at 10% 20%, rgba(212, 175, 55, 0.1) 0%, transparent 45%), radial-gradient(circle at 90% 80%, rgba(245, 158, 11, 0.1) 0%, transparent 45%)",
+            brandColor: "#d4af37",
+            accentColor: "#f59e0b",
+            titleColor: "#d4af37",
+            titleFont: "'Outfit', sans-serif",
+            subtitleColor: "#ffffff",
+            subtitleFont: "'Outfit', sans-serif",
+            bulletColor: "#f3f4f6",
+            bulletIconColor: "#f59e0b",
+            quoteBorderColor: "#d4af37",
+            quoteTextColor: "#ffffff",
+            quoteAuthorColor: "#f59e0b",
+            progressBarBg: "rgba(255,255,255,0.03)",
+            wrapper: "background: #0a0907; background-image: radial-gradient(circle at 10% 20%, rgba(212, 175, 55, 0.1) 0%, transparent 45%), radial-gradient(circle at 90% 80%, rgba(245, 158, 11, 0.1) 0%, transparent 45%); color: #ffffff; font-family: 'Outfit', sans-serif; position: relative;",
+            title: `color: #d4af37; text-shadow: 0 0 15px rgba(212, 175, 55, 0.25); font-family: 'Outfit', sans-serif; font-size: ${slideLayout === "title-only" ? "64px" : "44px"}; font-weight: 800; line-height: 1.2; margin-bottom: 24px;`,
+            subtitle: "color: #ffffff; font-family: 'Outfit', sans-serif; font-size: 24px; font-weight: 500; opacity: 0.95; line-height: 1.4;",
+            bullets: "color: #f3f4f6; font-family: 'Outfit', sans-serif; font-size: 22px; line-height: 1.6; text-align: left; list-style-type: none; margin-top: 30px;",
+            bulletItem: "margin-bottom: 14px; display: flex; align-items: flex-start; gap: 12px;",
+            bulletIcon: "color: #f59e0b; margin-top: 2px;",
+            quoteBox: "border-left: 4px solid #d4af37; padding-left: 24px; text-align: left; margin: 40px 0;",
+            quoteText: "color: #ffffff; font-size: 28px; font-weight: 700; line-height: 1.4; margin-bottom: 12px; font-style: italic;",
+            quoteAuthor: "color: #f59e0b; font-size: 18px; font-weight: 600; text-transform: uppercase;",
+            header: "display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 20px; width: 100%; box-sizing: border-box;",
+            footer: "width: 100%; box-sizing: border-box; display: flex; align-items: center; justify-content: space-between; margin-top: auto;",
+            progressBarContainer: "height: 6px; width: 100%; background: rgba(255,255,255,0.03); position: absolute; bottom: 0; left: 0;",
+            progressBarFill: "height: 100%; background: linear-gradient(90deg, #d4af37, #f59e0b);"
+          };
+        case "ainews":
+          return {
+            wrapperBg: "#ffffff",
+            wrapperImage: "none",
+            brandColor: "#000000",
+            accentColor: "#888888",
+            titleColor: "#000000",
+            titleFont: "'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Neue Haas Grotesk', sans-serif",
+            subtitleColor: "#111827",
+            subtitleFont: "'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif",
+            bulletColor: "#111827",
+            bulletIconColor: "#000000",
+            quoteBorderColor: "#000000",
+            quoteTextColor: "#000000",
+            quoteAuthorColor: "#6b7280",
+            progressBarBg: "rgba(0,0,0,0.04)",
+            categoryTag: "AI NEWS",
+            categoryTagStyle: "font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; font-size: 14px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.12em; color: #888888; margin-bottom: 14px;",
+            wrapper: "background: #ffffff; color: #000000; font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; position: relative; border: 1px solid #e5e5e5;",
+            title: `color: #000000; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Neue Haas Grotesk', sans-serif; font-size: ${slideLayout === "title-only" ? "56px" : "44px"}; font-weight: 900; line-height: 1.08; margin-bottom: 24px; letter-spacing: -0.03em;`,
+            subtitle: "color: #111827; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif; font-size: 22px; font-weight: 400; line-height: 1.5;",
+            bullets: "color: #111827; font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; font-size: 22px; line-height: 1.6; text-align: left; list-style-type: none; margin-top: 24px;",
+            bulletItem: "margin-bottom: 14px; display: flex; align-items: flex-start; gap: 12px;",
+            bulletIcon: "color: #000000; margin-top: 2px;",
+            quoteBox: "border-left: 4px solid #000000; padding-left: 24px; text-align: left; margin: 30px 0;",
+            quoteText: "color: #000000; font-size: 28px; font-weight: 800; line-height: 1.3; margin-bottom: 12px;",
+            quoteAuthor: "color: #6b7280; font-size: 18px; font-weight: 600; text-transform: uppercase;",
+            header: "display: flex; align-items: center; justify-content: space-between; border-bottom: none; padding-bottom: 12px; width: 100%; box-sizing: border-box;",
+            footer: "width: 100%; box-sizing: border-box; display: flex; align-items: center; justify-content: space-between; border-top: 1px solid #e5e7eb; padding-top: 18px; margin-top: auto;",
+            brandBracketStyle: "font-family: 'Fira Code', 'JetBrains Mono', 'SF Mono', monospace; font-size: 20px; font-weight: 800; color: #000000; letter-spacing: 0.05em;",
+            slideCounterStyle: "font-family: 'Fira Code', monospace; font-size: 16px; font-weight: 500; color: #94a3b8; letter-spacing: 0.1em;",
+            progressBarContainer: "height: 4px; width: 100%; background: rgba(0,0,0,0.04); position: absolute; bottom: 0; left: 0;",
+            progressBarFill: "height: 100%; background: #000000;"
+          };
+      }
+    })();
+
+    if (!rawStyles) return {} as any;
+
+    if (scale !== 1.0) {
+      const scaledStyles = { ...rawStyles };
+      const regex = /(\d+(?:\.\d+)?)px/g;
+      for (const key of Object.keys(scaledStyles)) {
+        const val = (scaledStyles as any)[key];
+        if (typeof val === "string") {
+          (scaledStyles as any)[key] = val.replace(regex, (match, p1) => {
+            const num = parseFloat(p1);
+            const scaledVal = Math.round(num * scale);
+            return `${scaledVal > 0 ? scaledVal : 1}px`;
+          });
+        }
+      }
+      return scaledStyles;
+    }
+
+    return rawStyles;
+  };
+
+  // Convert SVG string to Canvas and trigger download
+  const handleDownloadSlide = async (slideIndex: number) => {
+    const svgElement = document.getElementById(`svg-slide-${slideIndex}`);
+    if (!svgElement) {
+      toast.error("Could not find the slide render element.");
+      return;
+    }
+
+    const downloadToast = toast.loading(`Exporting slide ${slideIndex + 1}...`);
+
+    try {
+      // Clone the SVG element to avoid modifying the live DOM
+      const clonedSvg = svgElement.cloneNode(true) as SVGElement;
+      
+      // Set XML namespace on the foreignObject root element so the browser's XML parser handles HTML correctly
+      const htmlDiv = clonedSvg.querySelector("foreignObject > div");
+      if (htmlDiv) {
+        htmlDiv.setAttribute("xmlns", "http://www.w3.org/1999/xhtml");
+      }
+      
+      // Find all img elements in the cloned SVG
+      const imgElements = Array.from(clonedSvg.querySelectorAll("img"));
+      
+      // Convert all remote images to Base64 data URLs via proxy to bypass CORS
+      for (const imgEl of imgElements) {
+        const src = imgEl.getAttribute("src");
+        if (src && src.startsWith("http") && !src.startsWith("data:")) {
+          try {
+            const proxyUrl = `/api/proxy-image?url=${encodeURIComponent(src)}`;
+            const response = await fetch(proxyUrl);
+            if (!response.ok) {
+              throw new Error(`Failed to fetch image via proxy, status: ${response.status}`);
+            }
+            const blob = await response.blob();
+            const base64Data = await new Promise<string>((resolve, reject) => {
+              const reader = new FileReader();
+              reader.onloadend = () => resolve(reader.result as string);
+              reader.onerror = reject;
+              reader.readAsDataURL(blob);
+            });
+            imgEl.setAttribute("src", base64Data);
+          } catch (e) {
+            console.error("Failed to convert image to base64 during download:", src, e);
+          }
+        }
+      }
+
+      const svgString = new XMLSerializer().serializeToString(clonedSvg);
+      const base64Svg = window.btoa(unescape(encodeURIComponent(svgString)));
+      const dataURL = `data:image/svg+xml;base64,${base64Svg}`;
+ 
+      await new Promise<void>((resolve, reject) => {
+        const image = new Image();
+        image.onload = () => {
+          const canvas = document.createElement("canvas");
+          const { width: dw, height: dh } = getDimensions();
+          canvas.width = dw;
+          canvas.height = dh;
+          const context = canvas.getContext("2d");
+          if (context) {
+            context.drawImage(image, 0, 0, dw, dh);
+            const pngDataUrl = canvas.toDataURL("image/png");
+            const downloadLink = document.createElement("a");
+            downloadLink.href = pngDataUrl;
+            downloadLink.download = `${brandName.toLowerCase().replace(/\s+/g, "-")}-slide-${slideIndex + 1}.png`;
+            document.body.appendChild(downloadLink);
+            downloadLink.click();
+            document.body.removeChild(downloadLink);
+            toast.success(`Slide ${slideIndex + 1} downloaded successfully!`, { id: downloadToast });
+            resolve();
+          } else {
+            toast.error("Canvas context generation failed.", { id: downloadToast });
+            reject(new Error("Canvas context generation failed."));
+          }
+        };
+        image.onerror = () => {
+          toast.error("Failed to load slide content for export.", { id: downloadToast });
+          reject(new Error("Failed to load slide content for export."));
+        };
+        image.src = dataURL;
+      });
+    } catch (error: any) {
+      console.error(error);
+      toast.error("Error generating slide image file.", { id: downloadToast });
+    }
+  };
+
+  // Download all slides in order with a minor timeout to bypass popup block triggers
+  const handleDownloadAllSlides = async () => {
+    toast.success(`Starting download of all ${slides.length} slides sequentially...`);
+    for (let i = 0; i < slides.length; i++) {
+      try {
+        await handleDownloadSlide(i);
+        await new Promise((resolve) => setTimeout(resolve, 400));
+      } catch (err) {
+        console.error(`Failed to download slide ${i + 1}:`, err);
+      }
+    }
+  };
+
+  const styles = getThemeStyles(activeSlide.layout, liveScaleMultiplier);
+
+  const getThemePreviewColors = (themeId: string) => {
+    switch (themeId) {
+      case "cyberpunk":
+        return { bg: "#05050a", border: "rgba(255,255,255,0.1)", dots: ["#06b6d4", "#9333ea"] };
+      case "cream":
+        return { bg: "#F9F6F0", border: "#e5e5e5", dots: ["#5c554c", "#8c8273"] };
+      case "sunset":
+        return { bg: "linear-gradient(135deg, #FF512F, #DD2476)", border: "transparent", dots: ["#ffffff", "#ffecd2"] };
+      case "terminal":
+        return { bg: "#090c0f", border: "#18212c", dots: ["#39ff14", "#8892b0"] };
+      case "glass":
+        return { bg: "linear-gradient(135deg, #03001e, #4a0072)", border: "rgba(255,255,255,0.1)", dots: ["#a5f3fc", "#c084fc"] };
+      case "emerald":
+        return { bg: "#041611", border: "rgba(255,255,255,0.05)", dots: ["#10b981", "#34d399"] };
+      case "minimal":
+        return { bg: "#ffffff", border: "#e5e5e5", dots: ["#0a0a0a", "#404040"] };
+      case "gold":
+        return { bg: "#0a0907", border: "rgba(255,255,255,0.05)", dots: ["#d4af37", "#f59e0b"] };
+      case "ainews":
+        return { bg: "#ffffff", border: "#000000", dots: ["#000000", "#888888"] };
+      default:
+        return { bg: "#ffffff", border: "#e5e5e5", dots: ["#000000"] };
+    }
+  };
+
+  const renderBgPatternMarkup = (suffix = "preview", localStyles = styles) => {
+    const color = theme === "cream" ? "#000000" : "#ffffff";
+    switch (bgPattern) {
+      case "grid":
+        return (
+          <div className="absolute inset-0 pointer-events-none opacity-[0.06] z-0 overflow-hidden" style={{ mixBlendMode: theme === "cream" ? "multiply" : "screen" }}>
+            <svg width="100%" height="100%" style={{ color }}>
+              <defs>
+                <pattern id={`gridPattern-${suffix}`} width="40" height="40" patternUnits="userSpaceOnUse">
+                  <path d="M 40 0 L 0 0 0 40" fill="none" stroke="currentColor" strokeWidth="1" />
+                </pattern>
+              </defs>
+              <rect width="100%" height="100%" fill={`url(#gridPattern-${suffix})`} />
+            </svg>
+          </div>
+        );
+      case "dots":
+        return (
+          <div className="absolute inset-0 pointer-events-none opacity-[0.08] z-0 overflow-hidden" style={{ mixBlendMode: theme === "cream" ? "multiply" : "screen" }}>
+            <svg width="100%" height="100%" style={{ color }}>
+              <defs>
+                <pattern id={`dotsPattern-${suffix}`} width="24" height="24" patternUnits="userSpaceOnUse">
+                  <circle cx="12" cy="12" r="1.5" fill="currentColor" />
+                </pattern>
+              </defs>
+              <rect width="100%" height="100%" fill={`url(#dotsPattern-${suffix})`} />
+            </svg>
+          </div>
+        );
+      case "glow":
+        return (
+          <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden opacity-[0.15]">
+            <div 
+              className="absolute -top-[20%] -left-[20%] w-[80%] h-[80%] rounded-full blur-[100px]"
+              style={{ background: localStyles.accentColor }}
+            />
+            <div 
+              className="absolute -bottom-[20%] -right-[20%] w-[80%] h-[80%] rounded-full blur-[100px]"
+              style={{ background: localStyles.brandColor }}
+            />
+          </div>
+        );
+      case "isometric":
+        return (
+          <div className="absolute inset-0 pointer-events-none opacity-[0.06] z-0 overflow-hidden" style={{ mixBlendMode: theme === "cream" ? "multiply" : "screen" }}>
+            <svg width="100%" height="100%" style={{ color }}>
+              <defs>
+                <pattern id={`isoPattern-${suffix}`} width="60" height="30" patternUnits="userSpaceOnUse">
+                  <path d="M 30 0 L 60 15 L 30 30 L 0 15 Z" fill="none" stroke="currentColor" strokeWidth="0.8" />
+                </pattern>
+              </defs>
+              <rect width="100%" height="100%" fill={`url(#isoPattern-${suffix})`} />
+            </svg>
+          </div>
+        );
+      case "hexagons":
+        return (
+          <div className="absolute inset-0 pointer-events-none opacity-[0.05] z-0 overflow-hidden" style={{ mixBlendMode: theme === "cream" ? "multiply" : "screen" }}>
+            <svg width="100%" height="100%" style={{ color }}>
+              <defs>
+                <pattern id={`hexPattern-${suffix}`} width="56.28" height="97.48" patternUnits="userSpaceOnUse">
+                  <path d="M0 24.37 L28.14 8.12 L56.28 24.37 L56.28 56.87 L28.14 73.12 L0 56.87 Z M28.14 8.12 L28.14 0 M56.28 24.37 L56.28 8.12 M0 24.37 L0 8.12 M28.14 73.12 L28.14 97.48 M56.28 56.87 L56.28 73.12 M0 56.87 L0 73.12" fill="none" stroke="currentColor" strokeWidth="0.8" />
+                </pattern>
+              </defs>
+              <rect width="100%" height="100%" fill={`url(#hexPattern-${suffix})`} />
+            </svg>
+          </div>
+        );
+      case "waves":
+        return (
+          <div className="absolute inset-0 pointer-events-none opacity-[0.06] z-0 overflow-hidden" style={{ mixBlendMode: theme === "cream" ? "multiply" : "screen" }}>
+            <svg width="100%" height="100%" style={{ color }}>
+              <defs>
+                <pattern id={`wavePattern-${suffix}`} width="80" height="40" patternUnits="userSpaceOnUse">
+                  <path d="M 0 20 Q 20 5, 40 20 T 80 20" fill="none" stroke="currentColor" strokeWidth="0.8" />
+                  <path d="M 0 30 Q 20 15, 40 30 T 80 30" fill="none" stroke="currentColor" strokeWidth="0.8" opacity="0.5" />
+                </pattern>
+              </defs>
+              <rect width="100%" height="100%" fill={`url(#wavePattern-${suffix})`} />
+            </svg>
+          </div>
+        );
+      default:
+        return null;
+    }
+  };
+
+  const renderVisualMediaCard = (slide: Slide, scale = 1.0) => {
+    const mediaUrl = slide.customVideo || slide.customImage;
+    const isHighRes = scale > 1.5;
+    
+    // Check if ainews theme
+    const isAiNews = theme === "ainews";
+    const cardWidthStr = isAiNews ? `${Math.round(940 * scale)}px` : "100%";
+    const cardHeightStr = isAiNews ? `${Math.round(470 * scale)}px` : (isHighRes ? `${Math.round(420)}px` : `${Math.round(180)}px`);
+    const radiusStr = isAiNews ? `${Math.round(22 * scale)}px` : `${Math.round(12 * (isHighRes ? 2.7 : 1.0))}px`;
+    const marginStr = isAiNews ? "0 auto" : `${Math.round(8 * (isHighRes ? 2.7 : 1.0))}px auto`;
+
+    if (mediaUrl) {
+      const isVideo = isVideoMedia(mediaUrl);
+      return (
+        <div 
+          className="bg-[#050505] rounded-2xl border border-neutral-800 text-white flex flex-col justify-center items-center text-center overflow-hidden shrink-0 relative"
+          style={{
+            borderRadius: radiusStr,
+            width: cardWidthStr,
+            height: cardHeightStr,
+            margin: marginStr,
+            boxSizing: "border-box"
+          }}
+        >
+          {isVideo ? (
+            <video 
+              src={mediaUrl} 
+              autoPlay 
+              loop 
+              muted 
+              playsInline 
+              controls={scale < 1.5}
+              className="w-full h-full block mx-auto self-center"
+              style={{ 
+                borderRadius: radiusStr,
+                objectFit: "cover",
+                margin: "0 auto"
+              }}
+            />
+          ) : (
+            <img 
+              src={mediaUrl} 
+              alt={stripHtmlTags(slide.title) || "Slide Media"}
+              className="w-full h-full block mx-auto self-center"
+              style={{ 
+                borderRadius: radiusStr,
+                objectFit: "cover",
+                margin: "0 auto"
+              }}
+            />
+          )}
+        </div>
+      );
+    }
+
+    const chartType = slide.visualMediaCardChartType || "none";
+    if (chartType === "none" && !slide.visualMediaCardTitle && !mediaUrl) return null;
+
+    const isPreview = scale < 0.8;
+
+    return (
+      <div 
+        className="bg-[#050505] rounded-2xl p-5 border border-neutral-800 text-white flex flex-col justify-center items-center overflow-hidden shrink-0 box-border"
+        style={{
+          borderRadius: radiusStr,
+          padding: `${Math.round(20 * (isHighRes ? 2.7 : 1.0))}px`,
+          width: cardWidthStr,
+          height: cardHeightStr,
+          margin: marginStr
+        }}
+      >
+        {chartType === "logo" && (
+          <div className="w-full h-full flex flex-col items-center justify-center py-6 text-center">
+            <span 
+              className="font-black text-white tracking-tight font-sans inline-block drop-shadow-md"
+              style={{ 
+                fontSize: isPreview ? "15px" : `${Math.round(32 * scale)}px`, 
+                color: "#ffffff" 
+              }}
+            >
+              {slide.visualMediaCardTitle || "GrowXLabs | AI Copilot"}
+            </span>
+          </div>
+        )}
+
+        {chartType === "leaderboard" && (
+          <div className="w-full h-full flex flex-col justify-between text-left font-sans space-y-2">
+            <div className="flex justify-between items-center border-b border-neutral-800 pb-2">
+              <span className="font-bold text-white text-[12px]" style={{ fontSize: `${Math.max(Math.round(12 * scale), 8)}px` }}>
+                General Agents Leaderboard
+              </span>
+              <span className="text-[9px] text-neutral-400 font-mono" style={{ fontSize: `${Math.max(Math.round(9 * scale), 7)}px` }}>
+                Max Thinking Effort (Elo v2)
+              </span>
+            </div>
+
+            <div className="space-y-1.5 py-1">
+              {[
+                { name: "Fable 5", score: "1760.0", width: "95%", highlight: false },
+                { name: "GPT-5.6 Sol", score: "1748.0", width: "92%", highlight: false },
+                { name: "Kimi K3", score: "1668.0", width: "84%", highlight: true },
+                { name: "Opus-4.8", score: "1600.0", width: "75%", highlight: false },
+                { name: "GLM-5.2", score: "1514.0", width: "65%", highlight: false },
+                { name: "GPT-5.5", score: "1494.0", width: "60%", highlight: false },
+              ].map((bar, bIdx) => (
+                <div key={bIdx} className="flex items-center gap-2 text-[10px]" style={{ fontSize: `${Math.max(Math.round(10 * scale), 7.5)}px` }}>
+                  <span className="w-20 shrink-0 font-bold truncate text-neutral-200">{bar.name}</span>
+                  <div className="flex-1 bg-neutral-900 rounded-full h-3 overflow-hidden p-0.5 border border-neutral-800 flex items-center">
+                    <div 
+                      className={`h-full rounded-full transition-all ${bar.highlight ? "bg-[#0075FF]" : "bg-neutral-600"}`}
+                      style={{ width: bar.width }}
+                    />
+                  </div>
+                  <span className={`w-12 text-right font-mono font-extrabold ${bar.highlight ? "text-[#0075FF]" : "text-neutral-400"}`}>
+                    {bar.score}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {chartType === "cost" && (
+          <div className="w-full h-full flex flex-col justify-between text-left font-sans space-y-2">
+            <div className="flex justify-between items-center border-b border-neutral-800 pb-1.5">
+              <span className="font-bold text-white text-[12px]" style={{ fontSize: `${Math.max(Math.round(12 * scale), 8)}px` }}>
+                BrowseComp · Score vs Cost per Task
+              </span>
+              <span className="text-[9px] text-[#0075FF] font-bold font-mono" style={{ fontSize: `${Math.max(Math.round(9 * scale), 7)}px` }}>
+                ★ Kimi K3 ~91% @ $2
+              </span>
+            </div>
+            
+            <div className="relative h-36 w-full border-l border-b border-neutral-700 p-2 font-mono text-[9px] text-neutral-400">
+              <div className="absolute top-2 left-4 text-[#0075FF] font-bold">★ Kimi K3 (~91% @ $2)</div>
+              <div className="absolute top-8 left-20 text-neutral-300">GPT-5.6 Sol</div>
+              <div className="absolute top-10 right-12 text-emerald-400">Claude Mythos 5</div>
+              <div className="absolute bottom-8 right-4 text-amber-400">Opus 4.8</div>
+              <div className="absolute bottom-4 left-28 text-rose-400">Sonnet 5</div>
+              
+              <svg className="absolute inset-0 w-full h-full pointer-events-none overflow-visible">
+                <polyline 
+                  fill="none" 
+                  stroke="#0075FF" 
+                  strokeWidth="2" 
+                  points="30,25 90,45 160,55 240,75 300,95" 
+                />
+                <circle cx="30" cy="25" r="4" fill="#FF4D4D" />
+                <circle cx="90" cy="45" r="3.5" fill="#ffffff" />
+                <circle cx="160" cy="55" r="3.5" fill="#10B981" />
+                <circle cx="240" cy="75" r="3.5" fill="#F59E0B" />
+                <circle cx="300" cy="95" r="3.5" fill="#EF4444" />
+              </svg>
+            </div>
+          </div>
+        )}
+
+        {chartType === "architecture" && (
+          <div className="w-full h-full flex flex-col justify-between text-left font-sans space-y-2">
+            <div className="flex justify-between items-center border-b border-neutral-800 pb-1.5">
+              <span className="font-bold text-white text-[11px]" style={{ fontSize: `${Math.max(Math.round(11 * scale), 7.5)}px` }}>
+                Speedup vs FLA Triton Baseline (%)
+              </span>
+              <span className="text-[9px] text-emerald-400 font-bold" style={{ fontSize: `${Math.max(Math.round(9 * scale), 6.5)}px` }}>
+                AttnRes GPU Kernel
+              </span>
+            </div>
+
+            <div className="relative h-36 w-full border-l border-b border-neutral-700 p-2 font-mono text-[9px]">
+              <div className="space-y-1 text-right text-[9px] pr-2">
+                <span className="text-[#FF4D4D] font-bold block">● Kimi K3 +59.7%</span>
+                <span className="text-blue-400 block">● Claude Fable 5 +57.1%</span>
+                <span className="text-emerald-400 block">● GPT 5.5 +30.8%</span>
+              </div>
+              
+              <svg className="absolute inset-0 w-full h-full pointer-events-none overflow-visible">
+                <path d="M 15 110 Q 60 90, 110 40 T 220 20 L 320 15" fill="none" stroke="#FF4D4D" strokeWidth="2.5" />
+                <path d="M 15 110 Q 70 95, 130 50 T 250 30 L 320 25" fill="none" stroke="#60A5FA" strokeWidth="1.5" strokeDasharray="3 3" />
+              </svg>
+            </div>
+          </div>
+        )}
+
+        {chartType === "roofline" && (
+          <div className="w-full h-full flex flex-col justify-between text-left font-sans space-y-2">
+            <div className="flex justify-between items-center border-b border-neutral-800 pb-1.5">
+              <span className="font-bold text-white text-[11px]" style={{ fontSize: `${Math.max(Math.round(11 * scale), 7.5)}px` }}>
+                MiniTriton CUDA-core roofline — NVIDIA L20 (sm_89), fp32
+              </span>
+              <span className="text-[9px] text-emerald-400 font-bold font-mono" style={{ fontSize: `${Math.max(Math.round(9 * scale), 6.5)}px` }}>
+                Peak FP32 37.2 TFLOPS
+              </span>
+            </div>
+
+            <div className="relative h-36 w-full border-l border-b border-neutral-700 p-2 font-mono text-[9px] text-neutral-400">
+              <svg className="absolute inset-0 w-full h-full pointer-events-none overflow-visible">
+                <polyline fill="none" stroke="#ffffff" strokeWidth="1.5" points="15,110 130,30 320,30" />
+                <polyline fill="none" stroke="#FF4D4D" strokeWidth="2" points="20,105 90,70 160,45 240,38" />
+                <circle cx="90" cy="70" r="3.5" fill="#3B82F6" />
+                <circle cx="160" cy="45" r="3.5" fill="#EF4444" />
+                <circle cx="240" cy="38" r="3.5" fill="#10B981" />
+              </svg>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const renderImageOrSvgMarkup = (slide: Slide, className: string, style: React.CSSProperties = {}, svgHeight = "400px") => {
+    if (slide.customImage) {
+      return (
+        <div style={{ position: "relative", overflow: "hidden", width: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", margin: "0 auto" }}>
+          <img 
+            src={slide.customImage} 
+            alt="Slide Graphic" 
+            className={className}
+            style={{ margin: "0 auto", alignSelf: "center", display: "block", ...style }} 
+          />
+        </div>
+      );
+    }
+    
+    if (visualMode === "svg" && slide.svgCode) {
+      return (
+        <div 
+          style={{ 
+            position: "relative", 
+            width: "100%", 
+            display: "flex", 
+            flexDirection: "column",
+            alignItems: "center", 
+            justifyContent: "center",
+            textAlign: "center",
+            margin: "0 auto",
+            maxHeight: svgHeight,
+            overflow: "hidden"
+          }}
+          dangerouslySetInnerHTML={{ __html: slide.svgCode }}
+        />
+      );
+    }
+
+    const src = `https://image.pollinations.ai/prompt/${encodeURIComponent(stripHtmlTags(slide.imagePrompt || slide.title))}?width=500&height=500&nologo=true&model=flux`;
+    return (
+      <div style={{ position: "relative", overflow: "hidden", width: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", margin: "0 auto" }}>
+        <img 
+          src={src} 
+          alt="Slide Graphic" 
+          className={className}
+          style={{ margin: "0 auto", alignSelf: "center", display: "block", ...style }} 
+        />
+      </div>
+    );
+  };
+
+  const renderImageElement = (className = "rounded-xl border border-white/10 w-full object-cover", height = 140) => {
+    const scaledHeight = `${Math.round(height * liveScaleMultiplier)}px`;
+    return renderImageOrSvgMarkup(activeSlide, className, { height: scaledHeight, objectFit: "cover" }, scaledHeight);
+  };
+
+  const renderStreamingWidget = (type: "generation" | "refinement") => {
+    if (type === "generation" && !isGenerating) return null;
+    if (type === "refinement" && !isRefining) return null;
+    
+    // Parse whatever slides we have from streamBuffer
+    const parsed = parsePartialSlides(streamBuffer);
+    const parsedSlides = parsed.slides || [];
+    const totalSlidesTarget = type === "generation" ? slideCount : slides.length;
+    
+    return (
+      <div className="mt-4 p-5 rounded-2xl border border-neutral-200 bg-neutral-50/50 space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="relative flex h-2.5 w-2.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+            </span>
+            <span className="text-[10px] font-bold text-neutral-800 uppercase tracking-wider">
+              Gemini SSE Pipeline
+            </span>
+          </div>
+          <span className="text-[9px] bg-neutral-200/70 text-neutral-700 font-bold px-2 py-0.5 rounded-full uppercase">
+            {type === "generation" ? "Generating" : "Refining"}
+          </span>
+        </div>
+
+        {/* Progress Bar */}
+        <div className="space-y-1">
+          <div className="flex justify-between text-[10px] font-bold text-neutral-500">
+            <span>Slide Stream Progress</span>
+            <span>{parsedSlides.length} / {totalSlidesTarget} Slides Compiled</span>
+          </div>
+          <div className="h-2 w-full bg-neutral-200/70 rounded-full overflow-hidden">
+            <div 
+              className="h-full bg-gradient-to-r from-[#0075de] to-indigo-600 transition-all duration-300"
+              style={{ width: `${Math.min(100, (parsedSlides.length / totalSlidesTarget) * 100)}%` }}
+            />
+          </div>
+        </div>
+
+        {/* Slides Checklist */}
+        <div className="space-y-1.5 max-h-[150px] overflow-y-auto pr-1">
+          {Array.from({ length: totalSlidesTarget }).map((_, idx) => {
+            const isParsed = idx < parsedSlides.length;
+            const isCurrent = idx === parsedSlides.length;
+            const slideData = parsedSlides[idx];
+            
+            return (
+              <div 
+                key={idx} 
+                className={`flex items-center justify-between p-2 rounded-xl text-xs font-medium border transition-all ${
+                  isParsed 
+                    ? "bg-[#e0f2fe]/40 border-[#bae6fd] text-neutral-800" 
+                    : isCurrent 
+                    ? "bg-white border-[#0075de]/30 text-neutral-900 shadow-sm shadow-[#0075de]/5" 
+                    : "bg-transparent border-neutral-100/50 text-neutral-400"
+                }`}
+              >
+                <div className="flex items-center gap-2 truncate">
+                  <span className={`w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-bold ${
+                    isParsed 
+                      ? "bg-emerald-500 text-white" 
+                      : isCurrent 
+                      ? "bg-[#0075de] text-white animate-pulse" 
+                      : "bg-neutral-100 text-neutral-400"
+                  }`}>
+                    {isParsed ? "✓" : idx + 1}
+                  </span>
+                  <span className="truncate">
+                    {slideData ? slideData.title : isCurrent ? "Streaming tokens..." : `Slide ${idx + 1}`}
+                  </span>
+                </div>
+                {slideData && (
+                  <span className="text-[9px] bg-neutral-200/60 px-1.5 py-0.5 rounded font-mono text-neutral-600 uppercase shrink-0">
+                    {slideData.layout || "layout"}
+                  </span>
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Live Token Terminal */}
+        <div className="space-y-1">
+          <label className="text-[9px] font-bold uppercase tracking-wider text-neutral-500 flex items-center gap-1">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-neutral-400">
+              <polyline points="4 17 10 11 4 5" />
+              <line x1="12" y1="19" x2="20" y2="19" />
+            </svg>
+            Token Event Buffer (JSON Stream)
+          </label>
+          <div className="bg-[#171717] rounded-xl p-3 font-mono text-[10px] text-[#22c55e] h-[100px] overflow-y-auto whitespace-pre-wrap select-all custom-scrollbar border border-neutral-800 shadow-inner">
+            {streamBuffer || "Waiting for stream pipeline initialization..."}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <div className="carousel-creator-panel w-full">
+      <style>{`
+        .custom-scrollbar::-webkit-scrollbar {
+          width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: #1f1f1f;
+          border-radius: 8px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: #3f3f3f;
+          border-radius: 8px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: #555;
+        }
+
+        /* Scoped overrides to bypass global .notion-theme styles */
+        .carousel-creator-panel .panel-card {
+          background-color: #ffffff !important;
+          border: 1px solid #e0e0e0 !important;
+          border-radius: 16px !important;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04) !important;
+          padding: 32px !important;
+        }
+        
+        .carousel-creator-panel input,
+        .carousel-creator-panel select,
+        .carousel-creator-panel textarea {
+          background-color: #ffffff !important;
+          color: #171717 !important;
+          border: 1px solid #cccccc !important;
+          border-radius: 12px !important;
+          font-family: inherit !important;
+          font-size: 14px !important;
+          transition: all 0.15s ease-in-out !important;
+        }
+        
+        .carousel-creator-panel input:focus,
+        .carousel-creator-panel select:focus,
+        .carousel-creator-panel textarea:focus {
+          border-color: #0075de !important;
+          box-shadow: 0 0 0 2px rgba(0, 117, 222, 0.15) !important;
+          background-color: #ffffff !important;
+          outline: none !important;
+        }
+        
+        .carousel-creator-panel .checkbox-pill {
+          border: 1px solid #cccccc !important;
+          border-radius: 12px !important;
+          background-color: #ffffff !important;
+          padding: 10px 14px !important;
+          transition: all 0.15s ease-in-out !important;
+        }
+        .carousel-creator-panel .checkbox-pill:hover {
+          background-color: #f9fafb !important;
+          border-color: #a3a3a3 !important;
+        }
+        
+        .carousel-creator-panel .tab-btn-active {
+          background-color: #ffffff !important;
+          color: #171717 !important;
+          border: 1px solid #a3a3a3 !important;
+          box-shadow: 0 2px 5px rgba(0,0,0,0.06) !important;
+        }
+        .carousel-creator-panel .tab-btn-inactive {
+          background-color: transparent !important;
+          color: #666666 !important;
+          border: 1px solid transparent !important;
+        }
+        .carousel-creator-panel .tab-btn-inactive:hover {
+          background-color: rgba(0,0,0,0.04) !important;
+          color: #171717 !important;
+        }
+        
+        .carousel-creator-panel .theme-preset-btn {
+          border: 1px solid #cccccc !important;
+          background-color: #ffffff !important;
+          color: #404040 !important;
+          border-radius: 12px !important;
+          transition: all 0.15s ease-in-out !important;
+        }
+        .carousel-creator-panel .theme-preset-btn:hover {
+          background-color: #f9fafb !important;
+          border-color: #a3a3a3 !important;
+        }
+        .carousel-creator-panel .theme-preset-btn.theme-active {
+          border: 2px solid #0075de !important;
+          color: #0075de !important;
+          font-weight: 700 !important;
+          background-color: #ffffff !important;
+        }
+        
+        .carousel-creator-panel .phone-mock-frame {
+          background-color: #ffffff !important;
+          border: 2px solid #cccccc !important;
+          border-radius: 40px !important;
+          box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05) !important;
+          padding: 16px !important;
+        }
+        
+        .carousel-creator-panel .action-btn-secondary {
+          background-color: #ffffff !important;
+          color: #404040 !important;
+          border: 1px solid #cccccc !important;
+          border-radius: 12px !important;
+          transition: all 0.15s ease-in-out !important;
+        }
+        .carousel-creator-panel .action-btn-secondary:hover {
+          background-color: #f9fafb !important;
+          border-color: #a3a3a3 !important;
+          color: #171717 !important;
+        }
+        
+        /* General layout adjustments */
+        .carousel-creator-panel .info-pill {
+          background-color: rgba(0, 117, 222, 0.04) !important;
+          border: 1px solid rgba(0, 117, 222, 0.15) !important;
+          border-radius: 12px !important;
+          color: #0060b8 !important;
+        }
+      `}</style>
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">
+        {/* Editor Panel (Left 7 Cols) */}
+        <div className="lg:col-span-7 flex flex-col space-y-6">
+        
+        {/* Navigation Tabs */}
+        <div className="flex border border-neutral-300 p-1 bg-neutral-100/80 rounded-xl w-full sm:w-fit flex-wrap sm:flex-nowrap">
+          <button
+            onClick={() => setActiveTab("ai")}
+            className={`flex-1 sm:flex-initial flex items-center justify-center gap-2 px-2 sm:px-6 py-2 sm:py-2.5 rounded-lg text-[10px] sm:text-xs font-bold uppercase tracking-wider transition-all ${
+              activeTab === "ai" ? "tab-btn-active" : "tab-btn-inactive"
+            }`}
+          >
+            <BotIcon size={14} />
+            AI Generator
+          </button>
+          <button
+            onClick={() => setActiveTab("edit")}
+            className={`flex-1 sm:flex-initial flex items-center justify-center gap-2 px-2 sm:px-6 py-2 sm:py-2.5 rounded-lg text-[10px] sm:text-xs font-bold uppercase tracking-wider transition-all ${
+              activeTab === "edit" ? "tab-btn-active" : "tab-btn-inactive"
+            }`}
+          >
+            <Edit3 size={14} />
+            Edit Slides
+          </button>
+          <button
+            onClick={() => setActiveTab("design")}
+            className={`flex-1 sm:flex-initial flex items-center justify-center gap-2 px-2 sm:px-6 py-2 sm:py-2.5 rounded-lg text-[10px] sm:text-xs font-bold uppercase tracking-wider transition-all ${
+              activeTab === "design" ? "tab-btn-active" : "tab-btn-inactive"
+            }`}
+          >
+            <Palette size={14} />
+            Branding
+          </button>
+        </div>
+
+        {/* Tab 1: AI Prompt Generator */}
+        {activeTab === "ai" && (
+          <div className="panel-card space-y-6">
+            <div className="space-y-2">
+              <div className="text-lg font-bold text-neutral-900 flex items-center gap-2">
+                <BotIcon size={18} className="text-[#0075de]" />
+                Create with Gemini AI
+              </div>
+              <p className="text-xs text-neutral-500 font-medium">Input your core business topic and let Gemini generate an optimized carousel structure.</p>
+            </div>
+
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-[10px] font-bold uppercase tracking-wider text-neutral-500">Topic / Core Theme</label>
+                <input
+                  type="text"
+                  value={topic}
+                  onChange={(e) => setTopic(e.target.value)}
+                  placeholder="e.g. 5 AI systems that will save 20 hours a week for founders"
+                  className="w-full h-14 bg-neutral-50 border border-neutral-200/80 rounded-2xl px-6 text-sm text-neutral-900 placeholder-neutral-400 focus:outline-none focus:border-[#0075de]/50 focus:bg-white transition-all font-medium"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-neutral-500">Slide Count</label>
+                  <select
+                    value={slideCount}
+                    onChange={(e) => setSlideCount(Number(e.target.value))}
+                    className="w-full h-14 bg-neutral-50 border border-neutral-200/80 rounded-2xl px-6 text-sm text-neutral-900 focus:outline-none focus:border-[#0075de]/50 transition-all font-semibold"
+                  >
+                    {[3, 4, 5, 6, 7, 8, 9, 10].map((num) => (
+                      <option key={num} value={num} className="bg-white text-neutral-900">{num} Slides</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-neutral-500">Tone of Voice</label>
+                  <select
+                    value={tone}
+                    onChange={(e) => setTone(e.target.value)}
+                    className="w-full h-14 bg-neutral-50 border border-neutral-200/80 rounded-2xl px-6 text-sm text-neutral-900 focus:outline-none focus:border-[#0075de]/50 transition-all font-semibold"
+                  >
+                    {["Hype", "Professional", "Casual", "Technical", "Minimalist"].map((tStr) => (
+                      <option key={tStr} value={tStr} className="bg-white text-neutral-900">{tStr}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <Button
+              onClick={handleGenerateCarousel}
+              disabled={isGenerating}
+              className="w-full h-14 bg-[#0075de] hover:bg-[#0075de]/95 text-white font-bold rounded-2xl shadow-sm flex items-center justify-center gap-2 group transition-all"
+            >
+              {isGenerating ? (
+                <RefreshCw className="animate-spin" size={16} />
+              ) : (
+                <Sparkles size={16} />
+              )}
+              {isGenerating ? "Planning Slides with Gemini..." : "GENERATE AI CAROUSEL SLIDES"}
+            </Button>
+
+            {/* Quick GrowXLabs Daily Post Presets */}
+            <div className="pt-2 border-t border-neutral-200 space-y-2">
+              <label className="text-[10px] font-bold uppercase tracking-wider text-neutral-500 block">
+                ⚡ 1-Click GrowXLabs Daily Post Presets
+              </label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                <button
+                  type="button"
+                  onClick={() => loadGrowXLabsPreset("insights")}
+                  className="p-3.5 bg-neutral-900 text-white rounded-xl text-left hover:bg-black transition-all flex flex-col gap-1 cursor-pointer border border-neutral-800 shadow-sm"
+                >
+                  <span className="text-xs font-bold flex items-center gap-1.5 text-white">
+                    🚀 GrowXLabs AI Insights Post
+                  </span>
+                  <span className="text-[10px] text-neutral-400">
+                    5 Editorial Slides: OS, Lead Scraping, ROI & Architecture
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => loadGrowXLabsPreset("kimi")}
+                  className="p-3.5 bg-neutral-100 text-neutral-900 rounded-xl text-left hover:bg-neutral-200 transition-all flex flex-col gap-1 cursor-pointer border border-neutral-300 shadow-2xs"
+                >
+                  <span className="text-xs font-bold flex items-center gap-1.5 text-neutral-900">
+                    📰 AI News & Model Benchmark Post
+                  </span>
+                  <span className="text-[10px] text-neutral-500">
+                    5 Editorial Slides: Open Weights, ELO Leaderboards, Cost Charts
+                  </span>
+                </button>
+              </div>
+            </div>
+
+            {renderStreamingWidget("generation")}
+          </div>
+        )}
+
+        {/* Tab 2: Manual Slide Editor */}
+        {activeTab === "edit" && (
+          <div className="panel-card space-y-6">
+            <div className="flex justify-between items-center">
+              <div className="space-y-1">
+                <div className="text-lg font-bold text-neutral-900 flex items-center gap-2">
+                  <Edit3 size={18} className="text-[#0075de]" />
+                  Slide Editor
+                </div>
+                <p className="text-xs text-neutral-500 font-medium">Customize copy, bullet points, and layout structures for Slide {activeIndex + 1}.</p>
+              </div>
+              <div className="flex gap-2">
+                <button 
+                  onClick={addNewSlide} 
+                  className="action-btn-secondary px-3 py-1.5 text-xs font-bold flex items-center gap-1 rounded-lg"
+                >
+                  <Plus size={12} /> Add
+                </button>
+                <button 
+                  onClick={deleteCurrentSlide} 
+                  className="action-btn-secondary px-3 py-1.5 text-xs font-bold flex items-center gap-1 rounded-lg"
+                  style={{ color: "#dc2626", borderColor: "#fca5a5" }}
+                >
+                  <Trash2 size={12} /> Delete
+                </button>
+              </div>
+            </div>
+
+            {/* Editor fields */}
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-neutral-500">Visual Layout</label>
+                  <select
+                    value={activeSlide.layout}
+                    onChange={(e) => updateActiveSlide({ layout: e.target.value as any })}
+                    className="w-full h-12 bg-neutral-50 border border-neutral-200/80 rounded-xl px-4 text-xs text-neutral-900 focus:outline-none focus:border-[#0075de]/50 transition-all font-semibold"
+                  >
+                    <option value="title-only" className="bg-white text-neutral-900">Title Only (Hook / Transition)</option>
+                    <option value="bullets" className="bg-white text-neutral-900">Bullet Points (Value Slide)</option>
+                    <option value="quote" className="bg-white text-neutral-900">Quote Highlight</option>
+                    <option value="cta" className="bg-white text-neutral-900">Call to Action (CTA)</option>
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center h-5">
+                    <label className="text-[10px] font-bold uppercase tracking-wider text-neutral-500">Slide Title</label>
+                    <div className="flex gap-1">
+                      <button
+                        type="button"
+                        onClick={() => handleFormatText("title", "strong")}
+                        className="px-2 py-0.5 rounded bg-white hover:bg-neutral-100 border border-neutral-200 text-[10px] font-extrabold text-neutral-700 transition-colors shadow-sm cursor-pointer select-none"
+                        title="Bold"
+                      >
+                        B
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleFormatText("title", "em")}
+                        className="px-2 py-0.5 rounded bg-white hover:bg-neutral-100 border border-neutral-200 text-[10px] italic text-neutral-700 transition-colors shadow-sm cursor-pointer select-none"
+                        title="Italic"
+                      >
+                        I
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleFormatText("title", "u")}
+                        className="px-2 py-0.5 rounded bg-white hover:bg-neutral-100 border border-neutral-200 text-[10px] underline text-neutral-700 transition-colors shadow-sm cursor-pointer select-none"
+                        title="Underline"
+                      >
+                        U
+                      </button>
+                    </div>
+                  </div>
+                  <input
+                    id="slide-editor-title"
+                    type="text"
+                    value={activeSlide.title}
+                    onChange={(e) => updateActiveSlide({ title: e.target.value })}
+                    className="w-full h-12 bg-neutral-50 border border-neutral-200/80 rounded-xl px-4 text-xs text-neutral-900 focus:outline-none focus:border-[#0075de]/50 transition-all font-medium"
+                  />
+                </div>
+              </div>
+
+              {/* Editorial / AI News Controls */}
+              {theme === "ainews" && (
+                <div className="p-4 bg-neutral-900 text-white rounded-xl space-y-3 border border-neutral-800">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
+                      ✨ GrowXLabs Editorial Controls
+                    </span>
+                    <span className="text-[10px] text-neutral-400 font-mono">[ GrowXLabs ]</span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold uppercase tracking-wider text-neutral-400">Category Tag (e.g. AI NEWS, GROWX INSIGHTS)</label>
+                      <input
+                        type="text"
+                        value={activeSlide.categoryTag !== undefined ? activeSlide.categoryTag : "GROWX INSIGHTS"}
+                        onChange={(e) => updateActiveSlide({ categoryTag: e.target.value })}
+                        placeholder="e.g. GROWX INSIGHTS or AI NEWS"
+                        className="w-full h-10 bg-white border border-neutral-300 rounded-lg px-3 text-xs text-neutral-900 font-bold placeholder-neutral-400 focus:outline-none focus:border-[#0075de]"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold uppercase tracking-wider text-neutral-400">Graphic Card Type</label>
+                      <select
+                        value={(activeSlide.customImage || activeSlide.customVideo) ? "custom-upload" : (activeSlide.visualMediaCardChartType || "logo")}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          if (val === "custom-upload") {
+                            // keeps existing customImage / customVideo or opens file picker
+                          } else {
+                            updateActiveSlide({ customImage: undefined, customVideo: undefined, visualMediaCardChartType: val as any });
+                          }
+                        }}
+                        className="w-full h-10 bg-neutral-800 border border-neutral-700 rounded-lg px-3 text-xs text-white focus:outline-none focus:border-[#0075de]"
+                      >
+                        <option value="logo">Brand Title Badge (Text Logo)</option>
+                        <option value="leaderboard">ELO Leaderboard Bar Chart</option>
+                        <option value="cost">BrowseComp Cost Scatter Plot</option>
+                        <option value="architecture">GPU Speedup Architecture Curve</option>
+                        <option value="roofline">Roofline Memory Plot</option>
+                        <option value="custom-upload">🎥 Custom Image / Video File (MP4, WebM)</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Direct Image/Video Upload for Dark Graphic Box */}
+                  <div className="pt-2 border-t border-neutral-800 flex items-center justify-between gap-3">
+                    <div className="flex-1">
+                      <label className="text-[10px] font-bold uppercase tracking-wider text-neutral-400 block mb-1">
+                        Upload Image or Video (MP4 / WebM / MOV)
+                      </label>
+                      <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+                        <input
+                          type="file"
+                          accept="image/*,video/*"
+                          id="editorial-custom-media-file"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              const isVideo = file.type.startsWith("video/");
+                              const reader = new FileReader();
+                              reader.onloadend = () => {
+                                const dataUrl = reader.result as string;
+                                if (isVideo) {
+                                  updateActiveSlide({ customVideo: dataUrl, customImage: undefined, imageEnabled: true });
+                                  toast.success("Video uploaded & auto-playing in post!");
+                                } else {
+                                  updateActiveSlide({ customImage: dataUrl, customVideo: undefined, imageEnabled: true });
+                                  toast.success("Image uploaded & fitted to post!");
+                                }
+                              };
+                              reader.readAsDataURL(file);
+                            }
+                          }}
+                          className="hidden"
+                        />
+                        <label
+                          htmlFor="editorial-custom-media-file"
+                          className="px-3 py-1.5 bg-[#0075de] hover:bg-[#0075de]/90 text-white rounded-lg text-xs font-bold cursor-pointer transition-all flex items-center gap-1.5"
+                        >
+                          <Film size={13} />
+                          Upload Picture / Video
+                        </label>
+
+                        {(activeSlide.customImage || activeSlide.customVideo) && (
+                          <button
+                            type="button"
+                            onClick={() => updateActiveSlide({ customImage: undefined, customVideo: undefined })}
+                            className="px-2.5 py-1.5 bg-red-900/60 text-red-300 hover:bg-red-900 border border-red-700 rounded-lg text-[11px] font-bold transition-all"
+                          >
+                            Remove Media
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <div className="space-y-2">
+                <div className="flex justify-between items-center h-5">
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-neutral-500">
+                    {activeSlide.layout === "quote" ? "Quote Text" : "Description / Subtitle"}
+                  </label>
+                  <div className="flex gap-1">
+                    <button
+                      type="button"
+                      onClick={() => handleFormatText("subtitle", "strong")}
+                      className="px-2 py-0.5 rounded bg-white hover:bg-neutral-100 border border-neutral-200 text-[10px] font-extrabold text-neutral-700 transition-colors shadow-sm cursor-pointer select-none"
+                      title="Bold"
+                    >
+                      B
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleFormatText("subtitle", "em")}
+                      className="px-2 py-0.5 rounded bg-white hover:bg-neutral-100 border border-neutral-200 text-[10px] italic text-neutral-700 transition-colors shadow-sm cursor-pointer select-none"
+                      title="Italic"
+                    >
+                      I
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleFormatText("subtitle", "u")}
+                      className="px-2 py-0.5 rounded bg-white hover:bg-neutral-100 border border-neutral-200 text-[10px] underline text-neutral-700 transition-colors shadow-sm cursor-pointer select-none"
+                      title="Underline"
+                    >
+                      U
+                    </button>
+                  </div>
+                </div>
+                <textarea
+                  id="slide-editor-subtitle"
+                  value={activeSlide.subtitle}
+                  onChange={(e) => updateActiveSlide({ subtitle: e.target.value })}
+                  rows={3}
+                  className="w-full bg-neutral-50 border border-neutral-200/80 rounded-xl p-4 text-xs text-neutral-900 focus:outline-none focus:border-[#0075de]/50 transition-all font-medium resize-none"
+                />
+              </div>
+
+              {/* Slide Image Settings Section */}
+              <div className="border border-neutral-200 rounded-xl p-4 space-y-4 bg-neutral-50/50">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-600 flex items-center gap-1.5">
+                    <LayoutGrid size={12} className="text-[#0075de]" />
+                    Slide Graphic Layer
+                  </span>
+                  <label className="relative inline-flex items-center cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={!!activeSlide.imageEnabled}
+                      onChange={(e) => updateActiveSlide({ imageEnabled: e.target.checked })}
+                      className="sr-only peer"
+                    />
+                    <div className="w-9 h-5 bg-neutral-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-neutral-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#0075de]"></div>
+                    <span className="ml-2 text-[10px] font-bold uppercase tracking-wider text-neutral-700">
+                      {activeSlide.imageEnabled ? "Active" : "Off"}
+                    </span>
+                  </label>
+                </div>
+
+                {activeSlide.imageEnabled && (
+                  <div className="space-y-4 pt-3 border-t border-neutral-200/60">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-bold uppercase tracking-wider text-neutral-500">Graphic Type</label>
+                        <select
+                          value={getGraphicType(activeSlide)}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            if (val === "svg") {
+                              updateActiveSlide({ customImage: undefined });
+                            } else if (val === "ai-image") {
+                              const prompt = activeSlide.imagePrompt || activeSlide.title || "Graphic";
+                              const defaultUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=500&height=500&nologo=true&model=flux`;
+                              updateActiveSlide({ customImage: defaultUrl });
+                            } else {
+                              updateActiveSlide({ customImage: "" });
+                            }
+                          }}
+                          className="w-full h-10 bg-white border border-neutral-200 rounded-lg px-3 text-xs focus:outline-none focus:border-[#0075de] font-semibold"
+                        >
+                          <option value="svg">AI Vector Graphic (SVG)</option>
+                          <option value="ai-image">AI Generated Image</option>
+                          <option value="upload">Custom Image Upload</option>
+                        </select>
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-bold uppercase tracking-wider text-neutral-500">Layout Alignment</label>
+                        <select
+                          value={activeSlide.imageLayout || "split-right"}
+                          onChange={(e) => updateActiveSlide({ imageLayout: e.target.value as any })}
+                          className="w-full h-10 bg-white border border-neutral-200 rounded-lg px-3 text-xs focus:outline-none focus:border-[#0075de] font-semibold"
+                        >
+                          <option value="split-right">Split Right</option>
+                          <option value="split-left">Split Left</option>
+                          <option value="centered">Centered / Inline</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    {getGraphicType(activeSlide) === "svg" && (
+                      <div className="space-y-2">
+                        <div className="flex justify-between items-center">
+                          <label className="text-[10px] font-bold uppercase tracking-wider text-neutral-500">AI SVG Vector Code</label>
+                          <span className="text-[9px] text-[#0075de] font-bold uppercase">Editable</span>
+                        </div>
+                        <textarea
+                          value={activeSlide.svgCode || ""}
+                          onChange={(e) => updateActiveSlide({ svgCode: e.target.value })}
+                          placeholder="<svg viewBox='0 0 400 400' width='100%' height='100%'>...</svg>"
+                          rows={5}
+                          className="w-full bg-white border border-neutral-200 rounded-lg p-3 text-[11px] font-mono focus:outline-none focus:border-[#0075de] resize-y custom-scrollbar"
+                          style={{ minHeight: "100px" }}
+                        />
+                      </div>
+                    )}
+
+                    {getGraphicType(activeSlide) === "ai-image" && (
+                      <div className="space-y-3 p-3 bg-neutral-50 rounded-xl border border-neutral-200/60">
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-bold uppercase tracking-wider text-neutral-500">AI Image Prompt</label>
+                          <textarea
+                            value={activeSlide.imagePrompt || activeSlide.title || ""}
+                            onChange={(e) => updateActiveSlide({ imagePrompt: e.target.value })}
+                            placeholder="Describe the image details (e.g. isometric flat graphic vector of laptop, tech illustration, glowing paths)..."
+                            rows={3}
+                            className="w-full bg-white border border-neutral-200 rounded-lg p-3 text-xs focus:outline-none focus:border-[#0075de] resize-none"
+                          />
+                        </div>
+                        <button
+                          onClick={handleGenerateAIImage}
+                          disabled={isGeneratingImage}
+                          className="w-full h-10 bg-[#0075de] hover:bg-[#0075de]/95 disabled:bg-neutral-300 text-white font-bold rounded-lg flex items-center justify-center gap-2 text-xs transition-all uppercase tracking-wider"
+                        >
+                          {isGeneratingImage ? (
+                            <>
+                              <RotateCw className="animate-spin h-3.5 w-3.5" />
+                              Creating Image...
+                            </>
+                          ) : (
+                            <>
+                              <Sparkles className="h-3.5 w-3.5" />
+                              Generate & Embed Image
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    )}
+
+                    {getGraphicType(activeSlide) === "upload" && (
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-bold uppercase tracking-wider text-neutral-500">Upload Image or Video File</label>
+                        <div className="flex items-center gap-4">
+                          <input
+                            type="file"
+                            accept="image/*,video/*"
+                            id="custom-image-file-input"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) {
+                                const reader = new FileReader();
+                                reader.onloadend = () => {
+                                  const result = reader.result as string;
+                                  if (file.type.startsWith("video/")) {
+                                    updateActiveSlide({ customVideo: result, customImage: result });
+                                  } else {
+                                    updateActiveSlide({ customImage: result, customVideo: undefined });
+                                  }
+                                };
+                                reader.readAsDataURL(file);
+                              }
+                            }}
+                            className="hidden"
+                          />
+                          <label
+                            htmlFor="custom-image-file-input"
+                            className="px-4 py-2 border border-neutral-300 rounded-lg text-xs font-bold bg-white text-neutral-700 hover:bg-neutral-50 cursor-pointer select-none"
+                          >
+                            Choose File
+                          </label>
+                          {(activeSlide.customImage || activeSlide.customVideo) && (
+                            <div className="flex items-center gap-2">
+                              {isVideoMedia(activeSlide.customVideo || activeSlide.customImage) ? (
+                                <video src={activeSlide.customVideo || activeSlide.customImage} className="h-10 w-10 object-cover rounded border border-neutral-200" />
+                              ) : (
+                                <img src={activeSlide.customImage} alt="Preview" className="h-10 w-10 object-cover rounded border border-neutral-200" />
+                              )}
+                              <button
+                                onClick={() => updateActiveSlide({ customImage: "", customVideo: undefined })}
+                                className="text-[10px] text-red-500 hover:underline font-bold"
+                              >
+                                Clear
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Layout Specific: Quote Author */}
+              {activeSlide.layout === "quote" && (
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-neutral-500">Quote Author / Source</label>
+                  <input
+                    type="text"
+                    value={activeSlide.quoteAuthor || ""}
+                    onChange={(e) => updateActiveSlide({ quoteAuthor: e.target.value })}
+                    className="w-full h-12 bg-neutral-50 border border-neutral-200/80 rounded-xl px-4 text-xs text-neutral-900 focus:outline-none focus:border-[#0075de]/50 transition-all font-medium"
+                  />
+                </div>
+              )}
+
+              {/* Layout Specific: Bullets */}
+              {activeSlide.layout === "bullets" && (
+                <div className="space-y-3 pt-2">
+                  <div className="flex justify-between items-center">
+                    <label className="text-[10px] font-bold uppercase tracking-wider text-neutral-500">Bullet Points</label>
+                    <button onClick={addBullet} className="text-[10px] font-bold uppercase tracking-wider text-[#0075de] hover:underline flex items-center gap-1">
+                      <Plus size={10} /> Add Bullet
+                    </button>
+                  </div>
+
+                  {activeSlide.bullets.map((bullet, idx) => (
+                    <div key={idx} className="flex items-center gap-3">
+                      <div className="h-6 w-6 rounded-full bg-[#0075de]/10 border border-[#0075de]/20 flex items-center justify-center text-[10px] font-black text-[#0075de] shrink-0">
+                        {idx + 1}
+                      </div>
+                      <input
+                        type="text"
+                        value={bullet}
+                        onChange={(e) => updateBulletText(idx, e.target.value)}
+                        className="flex-1 h-11 bg-neutral-50 border border-neutral-200/80 rounded-xl px-4 text-xs text-neutral-900 focus:outline-none focus:border-[#0075de]/50 transition-all"
+                      />
+                      <button onClick={() => removeBullet(idx)} className="text-neutral-400 hover:text-red-500 p-1 transition-all">
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  ))}
+
+                  {activeSlide.bullets.length === 0 && (
+                    <div className="text-center p-6 border border-dashed border-neutral-200 rounded-2xl text-neutral-400 text-xs">
+                      No bullet points added. Click "Add Bullet" to include key points.
+                    </div>
+                  )}
+                </div>
+              )}
+              {/* Interactive Element Settings Section */}
+              <div className="border border-neutral-200 rounded-xl p-4 space-y-4 bg-neutral-50/50">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-600 flex items-center gap-1.5">
+                    <span>🎁</span> Interactive Element (Optional Button/Card)
+                  </span>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold uppercase tracking-wider text-neutral-500">Element Type</label>
+                    <select
+                      value={activeSlide.interactiveType || "none"}
+                      onChange={(e) => updateActiveSlide({ interactiveType: e.target.value as any })}
+                      className="w-full h-10 bg-white border border-neutral-300 rounded-lg px-3 text-xs text-neutral-900 focus:outline-none focus:border-[#0075de]"
+                    >
+                      <option value="none">None (Clean Slide)</option>
+                      <option value="button">Bordered Button</option>
+                      <option value="card">Bordered Card</option>
+                    </select>
+                  </div>
+                  
+                  {activeSlide.interactiveType && activeSlide.interactiveType !== "none" && (
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold uppercase tracking-wider text-neutral-500">
+                        {activeSlide.interactiveType === "button" ? "Button Label" : "Card Title"}
+                      </label>
+                      <input
+                        type="text"
+                        value={activeSlide.interactiveLabel || ""}
+                        onChange={(e) => updateActiveSlide({ interactiveLabel: e.target.value })}
+                        placeholder={activeSlide.interactiveType === "button" ? "e.g. Book a Call" : "e.g. Free Strategy Session"}
+                        className="w-full h-10 bg-white border border-neutral-300 rounded-lg px-3 text-xs text-neutral-900 focus:outline-none focus:border-[#0075de]"
+                      />
+                    </div>
+                  )}
+                </div>
+
+                {activeSlide.interactiveType === "card" && (
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold uppercase tracking-wider text-neutral-500">Card Subtext / Description</label>
+                    <textarea
+                      value={activeSlide.interactiveSubtext || ""}
+                      onChange={(e) => updateActiveSlide({ interactiveSubtext: e.target.value })}
+                      placeholder="Enter card details..."
+                      rows={2}
+                      className="w-full bg-white border border-neutral-300 rounded-lg p-3 text-xs text-neutral-900 focus:outline-none focus:border-[#0075de] resize-none"
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* AI Agent Loop Refinement */}
+            <div className="pt-4 border-t border-neutral-200/85 space-y-3">
+              <div className="text-xs font-bold text-neutral-800 flex items-center gap-1.5">
+                <BotIcon size={14} className="text-[#0075de]" />
+                Refine slides with AI Agent
+              </div>
+              <p className="text-[10px] text-neutral-500 font-medium">Type instructions to refine slide contents, formatting, or change specific details across all slides.</p>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={refinementPrompt}
+                  onChange={(e) => setRefinementPrompt(e.target.value)}
+                  placeholder="e.g. Make slide 3 focus on email tools, or make all titles shorter"
+                  className="flex-1 h-11 px-4 text-xs"
+                />
+                <button
+                  onClick={handleRefineCarousel}
+                  disabled={isRefining || slides.length === 0}
+                  className="bg-[#0075de] hover:bg-[#0075de]/95 text-white font-bold px-4 rounded-xl text-xs flex items-center justify-center gap-1.5 shrink-0 h-11"
+                  style={{ borderRadius: "12px" }}
+                >
+                  {isRefining ? (
+                    <RefreshCw className="animate-spin" size={12} />
+                  ) : (
+                    <BotIcon size={12} />
+                  )}
+                  {isRefining ? "Refining..." : "Send"}
+                </button>
+              </div>
+
+              {renderStreamingWidget("refinement")}
+            </div>
+
+            {/* Quick Slide Selector Nav Grid */}
+            <div className="pt-4 border-t border-neutral-200">
+              <label className="text-[10px] font-bold uppercase tracking-wider text-neutral-500 block mb-3">Slide Index Matrix</label>
+              <div className="flex flex-wrap gap-2">
+                {slides.map((_, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => setActiveIndex(idx)}
+                    className={`h-10 w-10 rounded-xl text-xs font-bold transition-all ${
+                      activeIndex === idx 
+                        ? "bg-[#0075de] text-white shadow-md shadow-[#0075de]/25 scale-105" 
+                        : "bg-neutral-50 border border-neutral-200 text-neutral-600 hover:bg-neutral-100 hover:text-neutral-950"
+                    }`}
+                  >
+                    {idx + 1}
+                  </button>
+                ))}
+                <button
+                  onClick={addNewSlide}
+                  className="h-10 w-10 rounded-xl bg-neutral-50 border border-dashed border-neutral-300 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-950 flex items-center justify-center transition-all"
+                >
+                  <Plus size={16} />
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Tab 3: Design & Branding Settings */}
+        {activeTab === "design" && (
+          <div className="panel-card space-y-6">
+            <div className="space-y-2">
+              <div className="text-lg font-bold text-neutral-900 flex items-center gap-2">
+                <Palette size={18} className="text-[#0075de]" />
+                Themes & Branding
+              </div>
+              <p className="text-xs text-neutral-500 font-medium">Fine-tune the typography, color tones, layout metadata, and user handle visibility.</p>
+            </div>
+
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-[10px] font-bold uppercase tracking-wider text-neutral-500">Theme Presets</label>
+                <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
+                  {[
+                    { id: "cyberpunk", name: "Cyberpunk" },
+                    { id: "cream", name: "Warm Cream" },
+                    { id: "sunset", name: "Neon Sunset" },
+                    { id: "terminal", name: "Terminal" },
+                    { id: "glass", name: "Glassmorphic" },
+                    { id: "emerald", name: "Emerald Forest" },
+                    { id: "minimal", name: "Minimal Stark" },
+                    { id: "gold", name: "Premium Gold" }
+                  ].map((tPreset) => {
+                    const preview = getThemePreviewColors(tPreset.id);
+                    return (
+                      <button
+                        key={tPreset.id}
+                        onClick={() => setTheme(tPreset.id as any)}
+                        className={`h-20 rounded-xl text-[9px] font-bold uppercase tracking-wider flex flex-col justify-center items-center transition-all theme-preset-btn ${
+                          theme === tPreset.id ? "theme-active scale-[1.02]" : ""
+                        }`}
+                      >
+                        <div className="flex gap-1 mb-2">
+                          <div 
+                            className="w-6 h-6 rounded-full border flex items-center justify-center gap-0.5 shadow-sm" 
+                            style={{ background: preview.bg, borderColor: preview.border }}
+                          >
+                            {preview.dots.map((dotColor, dIdx) => (
+                              <div key={dIdx} className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: dotColor }} />
+                            ))}
+                          </div>
+                        </div>
+                        <span>{tPreset.name}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-neutral-500">Brand Name</label>
+                  <input
+                    type="text"
+                    value={brandName}
+                    onChange={(e) => setBrandName(e.target.value)}
+                    placeholder="e.g. GrowXLabs"
+                    className="w-full h-12 bg-neutral-50 border border-neutral-200/80 rounded-xl px-4 text-xs text-neutral-900 focus:outline-none focus:border-[#0075de]/50 transition-all font-semibold"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-neutral-500">Instagram Handle</label>
+                  <input
+                    type="text"
+                    value={instagramHandle}
+                    onChange={(e) => setInstagramHandle(e.target.value)}
+                    placeholder="e.g. @growxlabs.tech"
+                    className="w-full h-12 bg-neutral-50 border border-neutral-200/80 rounded-xl px-4 text-xs text-neutral-900 focus:outline-none focus:border-[#0075de]/50 transition-all font-semibold"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-neutral-500">Background Pattern</label>
+                  <select
+                    value={bgPattern}
+                    onChange={(e) => setBgPattern(e.target.value as any)}
+                    className="w-full h-12 bg-neutral-50 border border-neutral-200/80 rounded-xl px-4 text-xs text-neutral-900 focus:outline-none focus:border-[#0075de]/50 transition-all font-semibold"
+                  >
+                    <option value="none">None (Solid / Gradient)</option>
+                    <option value="grid">Futuristic Grid Line</option>
+                    <option value="dots">Tech Dot Matrix</option>
+                    <option value="glow">Soft Glow Overlays</option>
+                    <option value="isometric">Isometric 3D Diamonds</option>
+                    <option value="hexagons">Tech Hexagon Grid</option>
+                    <option value="waves">Topographic Waves</option>
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-neutral-500">Carousel Format</label>
+                  <select
+                    value={aspectRatio}
+                    onChange={(e) => setAspectRatio(e.target.value as any)}
+                    className="w-full h-12 bg-neutral-50 border border-neutral-200/80 rounded-xl px-4 text-xs text-neutral-900 focus:outline-none focus:border-[#0075de]/50 transition-all font-semibold"
+                  >
+                    <option value="3:4">Portrait 3:4 (Recommended - 1080x1440)</option>
+                    <option value="4:5">Portrait 4:5 (Classic - 1080x1350)</option>
+                    <option value="1:1">Square 1:1 (Classic - 1080x1080)</option>
+                    <option value="1.91:1">Landscape 1.91:1 (1080x566)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="pt-2 grid grid-cols-3 gap-4">
+                <label className="checkbox-pill flex items-center gap-3 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={showHandle}
+                    onChange={(e) => setShowHandle(e.target.checked)}
+                    className="h-4 w-4 rounded border-neutral-300 text-[#0075de] focus:ring-[#0075de] focus:ring-offset-0"
+                  />
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-600">Show Handle</span>
+                </label>
+                <label className="checkbox-pill flex items-center gap-3 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={showPageNumber}
+                    onChange={(e) => setShowPageNumber(e.target.checked)}
+                    className="h-4 w-4 rounded border-neutral-300 text-[#0075de] focus:ring-[#0075de] focus:ring-offset-0"
+                  />
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-600">Show Pages</span>
+                </label>
+                <label className="checkbox-pill flex items-center gap-3 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={showProgressBar}
+                    onChange={(e) => setShowProgressBar(e.target.checked)}
+                    className="h-4 w-4 rounded border-neutral-300 text-[#0075de] focus:ring-[#0075de] focus:ring-offset-0"
+                  />
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-600">Progress Bar</span>
+                </label>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Preview Panel (Right 5 Cols) */}
+      <div className="lg:col-span-5 flex flex-col space-y-6 items-center">
+        
+        {/* Toggle Visual Mode */}
+        <div className="flex border border-neutral-300 p-1 bg-neutral-100/80 rounded-xl w-full max-w-[370px]">
+          <button
+            onClick={() => setVisualMode("svg")}
+            className={`flex-1 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all ${
+              visualMode === "svg" ? "tab-btn-active" : "tab-btn-inactive"
+            }`}
+          >
+            SVG Vector
+          </button>
+          <button
+            onClick={() => setVisualMode("image")}
+            className={`flex-1 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all ${
+              visualMode === "image" ? "tab-btn-active" : "tab-btn-inactive"
+            }`}
+          >
+            AI Image
+          </button>
+        </div>
+
+        {/* Instagram Phone Mock Frame */}
+        <div className="phone-mock-frame w-full max-w-[370px] pt-10 pb-6 relative overflow-hidden flex flex-col">
+          
+          {/* Phone Speaker & Camera Notch */}
+          <div className="absolute top-3 left-1/2 -translate-x-1/2 w-32 h-6 bg-neutral-800 rounded-full flex items-center justify-center gap-1.5 z-20">
+            <div className="w-8 h-1.5 bg-zinc-700 rounded-full" />
+            <div className="w-2.5 h-2.5 bg-zinc-900 border border-zinc-700 rounded-full" />
+          </div>
+
+          {/* Phone Content Canvas Area */}
+          <div 
+            ref={previewRef}
+            onTouchStart={onTouchStart}
+            onTouchMove={onTouchMove}
+            onTouchEnd={onTouchEnd}
+            className={`bg-black border border-neutral-200 rounded-[28px] overflow-hidden flex flex-col relative ${getAspectClass()}`}
+          >
+            
+            {/* Live rendered slide inside preview */}
+            <div 
+              className="w-full h-full flex flex-col justify-between items-center text-center select-none relative box-border"
+              style={{
+                backgroundColor: styles.wrapperBg,
+                backgroundImage: styles.wrapperImage,
+                fontFamily: styles.titleFont,
+                padding: theme === "ainews" ? `${Math.round(14 * scaleMultiplier)}px ${Math.round(20 * scaleMultiplier)}px` : `${Math.round(24 * scaleMultiplier)}px`
+              }}
+            >
+              {renderBgPatternMarkup()}
+              
+              {/* BRAND HEADER (Simulated inside live view) */}
+              {showHandle && theme !== "ainews" && (
+                <div 
+                  className="flex items-center justify-between border-b w-full box-border"
+                  style={{ 
+                    borderColor: "rgba(255,255,255,0.06)",
+                    paddingBottom: `${Math.round(8 * scaleMultiplier)}px`
+                  }}
+                >
+                  <div className="flex items-center gap-2.5">
+                    {/* Brand avatar */}
+                    <div 
+                      className="rounded-full flex items-center justify-center font-black shrink-0"
+                      style={{ 
+                        background: styles.accentColor, 
+                        color: theme === "cream" ? "#ffffff" : "#000000",
+                        height: `${Math.round(32 * scaleMultiplier)}px`,
+                        width: `${Math.round(32 * scaleMultiplier)}px`,
+                        fontSize: `${Math.max(Math.round(12 * scaleMultiplier), 8)}px`
+                      }}
+                    >
+                      {brandName[0] || "G"}
+                    </div>
+                    <span 
+                      className="font-black tracking-tight"
+                      style={{ 
+                        color: styles.brandColor, 
+                        fontFamily: styles.subtitleFont,
+                        fontSize: `${Math.max(Math.round(12 * scaleMultiplier), 9)}px`
+                      }}
+                    >
+                      {brandName}
+                    </span>
+                  </div>
+                  <span 
+                    className="font-bold opacity-60" 
+                    style={{ 
+                      color: styles.brandColor, 
+                      fontFamily: styles.subtitleFont,
+                      fontSize: `${Math.max(Math.round(10 * scaleMultiplier), 8)}px`
+                    }}
+                  >
+                    {instagramHandle}
+                  </span>
+                </div>
+              )}
+
+              {/* SLIDE CONTENT AREA */}
+              <div 
+                className="flex-1 flex flex-col justify-center items-center w-full box-border overflow-hidden"
+                style={{
+                  paddingTop: `${Math.round(16 * scaleMultiplier)}px`,
+                  paddingBottom: `${Math.round(16 * scaleMultiplier)}px`
+                }}
+              >
+                {theme === "ainews" ? (() => {
+                  const typo = getAiNewsTypography(activeSlide.title, activeSlide.subtitle, liveScaleMultiplier);
+                  return (
+                    <div className="w-full h-full flex flex-col justify-start items-start text-left overflow-hidden relative" style={{ boxSizing: "border-box" }}>
+                      {/* Top Area (Fixed Height 190px) */}
+                      <div 
+                        style={{ 
+                          height: `${Math.round(190 * liveScaleMultiplier)}px`, 
+                          width: "100%", 
+                          display: "flex", 
+                          flexDirection: "column", 
+                          justifyContent: "flex-start",
+                          gap: `${Math.round(20 * liveScaleMultiplier)}px`,
+                          margin: 0,
+                          padding: 0
+                        }}
+                      >
+                        <div 
+                          className="font-extrabold uppercase tracking-widest text-[#888888] font-sans"
+                          style={{ fontSize: `${Math.max(Math.round(18 * liveScaleMultiplier), 8)}px`, letterSpacing: "1.5px" }}
+                        >
+                          {activeSlide.categoryTag !== undefined ? activeSlide.categoryTag : "GROWX INSIGHTS"}
+                        </div>
+                        <div 
+                          className="font-black text-black leading-tight font-sans tracking-tight"
+                          style={{ 
+                            fontSize: `${typo.headlineSize}px`,
+                            lineHeight: typo.headlineLineHeight,
+                            margin: 0
+                          }}
+                        >
+                          {renderFormattedText(activeSlide.title)}
+                        </div>
+                      </div>
+
+                      {/* Image Area (Fixed Y & Size: Width 940px, Height 470px, Gap 32px) */}
+                      <div 
+                        style={{ 
+                          position: "absolute",
+                          top: `${Math.round(222 * liveScaleMultiplier)}px`,
+                          left: 0,
+                          width: "100%",
+                          height: `${Math.round(470 * liveScaleMultiplier)}px`
+                        }}
+                      >
+                        {renderVisualMediaCard(activeSlide, liveScaleMultiplier)}
+                      </div>
+
+                      {/* Body Area (Flexible starting at fixed Y offset: 222 + 470 + 40 gap = 732px) */}
+                      <div 
+                        className="w-full flex flex-col justify-start items-start text-left overflow-hidden"
+                        style={{ 
+                          position: "absolute",
+                          top: `${Math.round(732 * liveScaleMultiplier)}px`,
+                          left: 0,
+                          width: "100%",
+                          bottom: `${Math.round(30 * liveScaleMultiplier)}px`
+                        }}
+                      >
+                        <div 
+                          className="w-full text-neutral-800 font-sans whitespace-pre-line font-normal"
+                          style={{ 
+                            fontSize: `${typo.bodySize}px`,
+                            lineHeight: typo.bodyLineHeight
+                          }}
+                        >
+                          {renderFormattedText(activeSlide.subtitle)}
+                        </div>
+                        {renderInteractiveElementMarkup(activeSlide, liveScaleMultiplier, theme)}
+                      </div>
+                    </div>
+                  );
+                })() : (
+                  <>
+                    {activeSlide.layout === "title-only" && (
+                      <div className="w-full text-center">
+                        <div style={{
+                          color: styles.titleColor,
+                          fontFamily: styles.titleFont,
+                          fontSize: `${Math.round(24 * scaleMultiplier)}px`,
+                          fontWeight: 900,
+                          lineHeight: 1.15,
+                          marginBottom: `${Math.round(12 * scaleMultiplier)}px`,
+                          textTransform: theme === "cyberpunk" || theme === "sunset" ? "uppercase" : "none",
+                          fontStyle: theme === "cyberpunk" ? "italic" : "normal",
+                          textAlign: "center"
+                        }}>
+                          {renderFormattedText(activeSlide.title)}
+                        </div>
+                        <div style={{
+                          color: styles.subtitleColor,
+                          fontFamily: styles.subtitleFont,
+                          fontSize: `${Math.max(Math.round(13 * scaleMultiplier), 9)}px`,
+                          lineHeight: 1.4,
+                          opacity: 0.9,
+                          textAlign: "center"
+                        }}>
+                          {renderFormattedText(activeSlide.subtitle)}
+                        </div>
+                        {renderInteractiveElementMarkup(activeSlide, liveScaleMultiplier, theme)}
+                      </div>
+                    )}
+
+                    {activeSlide.layout === "bullets" && (
+                      <div className="w-full text-left">
+                        {activeSlide.imageEnabled ? (
+                          activeSlide.imageLayout === "centered" ? (
+                            <div 
+                              className="w-full"
+                              style={{
+                                display: "flex",
+                                flexDirection: "column",
+                                gap: `${Math.round(10 * scaleMultiplier)}px`
+                              }}
+                            >
+                              <div style={{ 
+                                color: styles.titleColor, 
+                                fontFamily: styles.titleFont, 
+                                fontSize: `${Math.round(16 * scaleMultiplier)}px`, 
+                                fontWeight: 800, 
+                                lineHeight: 1.2 
+                              }}>
+                                {renderFormattedText(activeSlide.title)}
+                              </div>
+                              {renderImageElement("rounded-lg border border-white/10 w-full object-cover", 150)}
+                              <ul style={{ display: "flex", flexDirection: "column", gap: `${Math.round(4 * scaleMultiplier)}px` }}>
+                                {activeSlide.bullets.map((bullet, index) => (
+                                  <li 
+                                    key={index} 
+                                    className="flex items-start font-semibold" 
+                                    style={{ 
+                                      color: styles.bulletColor, 
+                                      fontFamily: styles.subtitleFont,
+                                      fontSize: `${Math.max(Math.round(10 * scaleMultiplier), 8)}px`,
+                                      gap: `${Math.round(6 * scaleMultiplier)}px`
+                                    }}
+                                  >
+                                    <span style={{ color: styles.bulletIconColor }}>✔</span>
+                                    <span>{bullet}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                              {renderInteractiveElementMarkup(activeSlide, scaleMultiplier, theme)}
+                            </div>
+                          ) : (
+                            <div 
+                              className="grid grid-cols-12 items-center w-full"
+                              style={{ gap: `${Math.round(16 * scaleMultiplier)}px` }}
+                            >
+                              <div className={activeSlide.imageLayout === "split-left" ? "col-span-5" : "col-span-7"}>
+                                {activeSlide.imageLayout === "split-left" ? (
+                                  renderImageElement("rounded-lg border border-white/10 w-full object-cover aspect-square", 170)
+                                ) : (
+                                  <div style={{ display: "flex", flexDirection: "column", gap: `${Math.round(8 * scaleMultiplier)}px` }}>
+                                    <div style={{ 
+                                      color: styles.titleColor, 
+                                      fontFamily: styles.titleFont, 
+                                      fontSize: `${Math.round(15 * scaleMultiplier)}px`, 
+                                      fontWeight: 800, 
+                                      lineHeight: 1.2 
+                                    }}>
+                                      {renderFormattedText(activeSlide.title)}
+                                    </div>
+                                    <ul style={{ display: "flex", flexDirection: "column", gap: `${Math.round(4 * scaleMultiplier)}px` }}>
+                                      {activeSlide.bullets.map((bullet, index) => (
+                                        <li 
+                                          key={index} 
+                                          className="flex items-start font-semibold" 
+                                          style={{ 
+                                            color: styles.bulletColor, 
+                                            fontFamily: styles.subtitleFont,
+                                            fontSize: `${Math.max(Math.round(10 * scaleMultiplier), 8)}px`,
+                                            gap: `${Math.round(6 * scaleMultiplier)}px`
+                                          }}
+                                        >
+                                          <span style={{ color: styles.bulletIconColor }}>✔</span>
+                                          <span>{bullet}</span>
+                                        </li>
+                                      ))}
+                                    </ul>
+                                  </div>
+                                )}
+                              </div>
+                              <div className={activeSlide.imageLayout === "split-left" ? "col-span-7" : "col-span-5"}>
+                                {activeSlide.imageLayout === "split-left" ? (
+                                  <div style={{ display: "flex", flexDirection: "column", gap: `${Math.round(8 * scaleMultiplier)}px` }}>
+                                    <div style={{ 
+                                      color: styles.titleColor, 
+                                      fontFamily: styles.titleFont, 
+                                      fontSize: `${Math.round(15 * scaleMultiplier)}px`, 
+                                      fontWeight: 800, 
+                                      lineHeight: 1.2 
+                                    }}>
+                                      {renderFormattedText(activeSlide.title)}
+                                    </div>
+                                    <ul style={{ display: "flex", flexDirection: "column", gap: `${Math.round(4 * scaleMultiplier)}px` }}>
+                                      {activeSlide.bullets.map((bullet, index) => (
+                                        <li 
+                                          key={index} 
+                                          className="flex items-start font-semibold" 
+                                          style={{ 
+                                            color: styles.bulletColor, 
+                                            fontFamily: styles.subtitleFont,
+                                            fontSize: `${Math.max(Math.round(10 * scaleMultiplier), 8)}px`,
+                                            gap: `${Math.round(6 * scaleMultiplier)}px`
+                                          }}
+                                        >
+                                          <span style={{ color: styles.bulletIconColor }}>✔</span>
+                                          <span>{bullet}</span>
+                                        </li>
+                                      ))}
+                                    </ul>
+                                  </div>
+                                ) : (
+                                  renderImageElement("rounded-lg border border-white/10 w-full object-cover aspect-square", 170)
+                                )}
+                              </div>
+                              {renderInteractiveElementMarkup(activeSlide, scaleMultiplier, theme)}
+                            </div>
+                          )
+                        ) : (
+                          <>
+                            <div style={{
+                              color: styles.titleColor,
+                              fontFamily: styles.titleFont,
+                              fontSize: `${Math.round(18 * scaleMultiplier)}px`,
+                              fontWeight: 800,
+                              lineHeight: 1.2,
+                              marginBottom: `${Math.round(8 * scaleMultiplier)}px`
+                            }}>
+                              {renderFormattedText(activeSlide.title)}
+                            </div>
+                            <div style={{
+                              color: styles.subtitleColor,
+                              fontFamily: styles.subtitleFont,
+                              fontSize: `${Math.max(Math.round(12 * scaleMultiplier), 9)}px`,
+                              opacity: 0.8,
+                              marginBottom: `${Math.round(12 * scaleMultiplier)}px`
+                            }}>
+                              {renderFormattedText(activeSlide.subtitle)}
+                            </div>
+                            <ul style={{ display: "flex", flexDirection: "column", gap: `${Math.round(6 * scaleMultiplier)}px` }}>
+                              {activeSlide.bullets.map((bullet, index) => (
+                                <li 
+                                  key={index} 
+                                  className="flex items-start font-semibold" 
+                                  style={{ 
+                                    color: styles.bulletColor, 
+                                    fontFamily: styles.subtitleFont,
+                                    fontSize: `${Math.max(Math.round(11 * scaleMultiplier), 8.5)}px`,
+                                    gap: `${Math.round(8 * scaleMultiplier)}px`
+                                  }}
+                                >
+                                  <span style={{ color: styles.bulletIconColor }}>✔</span>
+                                  <span>{bullet}</span>
+                                </li>
+                              ))}
+                            </ul>
+                            {renderInteractiveElementMarkup(activeSlide, scaleMultiplier, theme)}
+                          </>
+                        )}
+                      </div>
+                    )}
+
+                    {activeSlide.layout === "quote" && (
+                      <div 
+                        className="w-full text-left" 
+                        style={{ 
+                          borderLeftWidth: `${Math.max(Math.round(4 * scaleMultiplier), 2)}px`,
+                          borderLeftStyle: "solid",
+                          borderColor: styles.quoteBorderColor,
+                          paddingLeft: `${Math.round(16 * scaleMultiplier)}px`
+                        }}
+                      >
+                        <div style={{
+                          fontSize: `${Math.max(Math.round(14 * scaleMultiplier), 9.5)}px`,
+                          fontStyle: "italic",
+                          fontWeight: 700,
+                          lineHeight: 1.4,
+                          marginBottom: `${Math.round(6 * scaleMultiplier)}px`,
+                          color: styles.quoteTextColor,
+                          fontFamily: theme === "cream" ? "'Playfair Display', serif" : styles.titleFont
+                        }}>
+                          "{renderFormattedText(activeSlide.subtitle)}"
+                        </div>
+                        <div style={{ 
+                          fontSize: `${Math.max(Math.round(9 * scaleMultiplier), 8)}px`, 
+                          fontFamily: styles.subtitleFont,
+                          fontWeight: 900, 
+                          textTransform: "uppercase", 
+                          letterSpacing: "1px", 
+                          color: styles.quoteAuthorColor 
+                        }}>
+                          — {activeSlide.quoteAuthor || "Quote Author"}
+                        </div>
+                        {renderInteractiveElementMarkup(activeSlide, scaleMultiplier, theme)}
+                      </div>
+                    )}
+
+                    {activeSlide.layout === "cta" && (
+                      <div 
+                        className="w-full text-center"
+                        style={{
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: `${Math.round(12 * scaleMultiplier)}px`
+                        }}
+                      >
+                        <div 
+                          className="rounded-xl bg-white/5 border border-white/10 flex items-center justify-center mx-auto text-primary animate-pulse"
+                          style={{
+                            height: `${Math.round(40 * scaleMultiplier)}px`,
+                            width: `${Math.round(40 * scaleMultiplier)}px`
+                          }}
+                        >
+                          <InstagramIcon size={Math.round(18 * scaleMultiplier)} style={{ color: styles.brandColor }} />
+                        </div>
+                        <div style={{
+                          color: styles.titleColor,
+                          fontFamily: styles.titleFont,
+                          fontSize: `${Math.round(20 * scaleMultiplier)}px`,
+                          fontWeight: 900,
+                          lineHeight: 1.2
+                        }}>
+                          {renderFormattedText(activeSlide.title)}
+                        </div>
+                        <div style={{
+                          color: styles.subtitleColor,
+                          fontFamily: styles.subtitleFont,
+                          fontSize: `${Math.max(Math.round(12 * scaleMultiplier), 9)}px`,
+                          opacity: 0.8
+                        }}>
+                          {renderFormattedText(activeSlide.subtitle)}
+                        </div>
+                        {renderInteractiveElementMarkup(activeSlide, scaleMultiplier, theme)}
+                        <div>
+                          <div 
+                            className="font-black tracking-widest inline-block uppercase"
+                            style={{ 
+                              background: styles.accentColor,
+                              color: theme === "cream" ? "#ffffff" : "#000000",
+                              fontFamily: styles.subtitleFont,
+                              padding: `${Math.round(6 * scaleMultiplier)}px ${Math.round(16 * scaleMultiplier)}px`,
+                              fontSize: `${Math.max(Math.round(9 * scaleMultiplier), 8)}px`,
+                              borderRadius: `${Math.round(8 * scaleMultiplier)}px`
+                            }}
+                          >
+                            SWIPE LEFT TO FOLLOW
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+
+              {/* BRAND FOOTER (Simulated inside live view) */}
+              <div 
+                className="w-full flex items-center justify-between border-t" 
+                style={{ 
+                  borderColor: theme === "ainews" ? "#e5e7eb" : "rgba(255,255,255,0.06)",
+                  paddingTop: `${Math.round(8 * scaleMultiplier)}px`
+                }}
+              >
+                {theme === "ainews" ? (
+                  <span 
+                    className="font-mono font-bold text-black tracking-wider" 
+                    style={{ 
+                      fontSize: `${Math.max(Math.round(12 * scaleMultiplier), 9)}px`
+                    }}
+                  >
+                    [{brandName}]
+                  </span>
+                ) : (
+                  <span 
+                    className="font-black tracking-widest opacity-50 uppercase" 
+                    style={{ 
+                      color: styles.brandColor, 
+                      fontFamily: styles.subtitleFont,
+                      fontSize: `${Math.max(Math.round(9 * scaleMultiplier), 8)}px`
+                    }}
+                  >
+                    {activeSlide.layout === "cta" ? "SAVE THIS POST" : "SWIPE LEFT ➔"}
+                  </span>
+                )}
+                {showPageNumber && (
+                  <span 
+                    className={theme === "ainews" ? "font-mono text-neutral-400 font-medium" : "font-black italic opacity-60"}
+                    style={{ 
+                      color: theme === "ainews" ? "#94a3b8" : styles.brandColor, 
+                      fontFamily: theme === "ainews" ? "'Fira Code', monospace" : styles.subtitleFont,
+                      fontSize: `${Math.max(Math.round(12 * scaleMultiplier), 9)}px`
+                    }}
+                  >
+                    {String(activeIndex + 1).padStart(2, '0')}/{String(slides.length).padStart(2, '0')}
+                  </span>
+                )}
+              </div>
+
+              {/* PROGRESS BAR FILL (Simulated inside live view) */}
+              {showProgressBar && (
+                <div className="h-1.5 w-full bg-white/5 absolute bottom-0 left-0">
+                  <div 
+                    className="h-full" 
+                    style={{ 
+                      width: `${((activeIndex + 1) / slides.length) * 100}%`,
+                      background: theme === "cream" ? "#5c554c" : `linear-gradient(90deg, ${styles.accentColor}, ${styles.brandColor})`
+                    }} 
+                  />
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Swipe controls */}
+          <div className="flex justify-between items-center mt-5 px-3">
+            <button
+              onClick={() => setActiveIndex(Math.max(0, activeIndex - 1))}
+              disabled={activeIndex === 0}
+              className="action-btn-secondary h-10 w-10 rounded-full disabled:opacity-30 disabled:pointer-events-none flex items-center justify-center cursor-pointer"
+            >
+              <ChevronLeft size={16} />
+            </button>
+            <div className="flex gap-1.5 items-center">
+              {slides.map((_, idx) => (
+                <div
+                  key={idx}
+                  className={`h-2 rounded-full transition-all duration-300 ${
+                    activeIndex === idx ? "w-5 bg-[#0075de]" : "w-2 bg-neutral-300"
+                  }`}
+                />
+              ))}
+            </div>
+            <button
+              onClick={() => setActiveIndex(Math.min(slides.length - 1, activeIndex + 1))}
+              disabled={activeIndex === slides.length - 1}
+              className="action-btn-secondary h-10 w-10 rounded-full disabled:opacity-30 disabled:pointer-events-none flex items-center justify-center cursor-pointer"
+            >
+              <ChevronRight size={16} />
+            </button>
+          </div>
+        </div>
+
+        {/* Action buttons */}
+        <div className="w-full max-w-[370px] space-y-3">
+          <Button
+            onClick={() => handleDownloadSlide(activeIndex)}
+            className="w-full h-12 bg-[#0075de] hover:bg-[#0075de]/95 text-white font-bold rounded-xl flex items-center justify-center gap-2 shadow-sm border-none transition-all"
+          >
+            <Download size={14} />
+            DOWNLOAD SLIDE {activeIndex + 1}
+          </Button>
+
+          <button
+            onClick={handleDownloadAllSlides}
+            className="action-btn-secondary w-full h-12 font-bold rounded-xl flex items-center justify-center gap-2 transition-all"
+          >
+            <LayoutGrid size={14} />
+            DOWNLOAD ALL {slides.length} SLIDES
+          </button>
+
+          <div className="info-pill flex gap-2.5 p-4 text-[11px] leading-relaxed font-medium">
+            <Info size={16} className="shrink-0 mt-0.5" />
+            <span>
+              All slides are drawn at high resolution ({svgWidth}x{svgHeight} px). Make sure you allow popups to download all slides together.
+            </span>
+          </div>
+        </div></div>
+
+        {/* ------------------------------------------------------------- */}
+        {/* HIDDEN RAW SVG ELEMENTS RENDERED FOR HIGH-RESOLUTION GRAPHICS EXPORT */}
+        {/* ------------------------------------------------------------- */}
+        <div className="hidden">
+          {slides.map((slide, sIdx) => {
+            const styles = getThemeStyles(slide.layout, scaleMultiplier);
+            return (
+              <svg 
+                key={sIdx} 
+                id={`svg-slide-${sIdx}`} 
+                viewBox={`0 0 ${svgWidth} ${svgHeight}`} 
+                width={svgWidth} 
+                height={svgHeight} 
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <defs>
+                  <style>
+                    {`
+                      .slide-bg { ${styles.wrapper} }
+                      .slide-header { ${styles.header} }
+                      .slide-title { ${styles.title} }
+                      .slide-subtitle { ${styles.subtitle} }
+                      .slide-bullets { ${styles.bullets} }
+                      .slide-bullet-item { ${styles.bulletItem} }
+                      .slide-bullet-icon { ${styles.bulletIcon} }
+                      .slide-quote-box { ${styles.quoteBox} }
+                      .slide-quote-text { ${styles.quoteText} }
+                      .slide-quote-author { ${styles.quoteAuthor} }
+                      .slide-footer { ${styles.footer} }
+                      .progress-bar-container { ${styles.progressBarContainer} }
+                      .progress-bar-fill { ${styles.progressBarFill} }
+                    `}
+                  </style>
+                </defs>
+                <foreignObject x="0" y="0" width={svgWidth} height={svgHeight}>
+                  <div 
+                    className="slide-bg" 
+                    style={{ 
+                      width: `${svgWidth}px`, 
+                      height: `${svgHeight}px`, 
+                      boxSizing: "border-box", 
+                      display: "flex", 
+                      flexDirection: "column", 
+                      justifyContent: "space-between", 
+                      alignItems: "center", 
+                      padding: theme === "ainews"
+                        ? `${Math.round(70 * scaleMultiplier)}px`
+                        : `${Math.round(80 * scaleMultiplier)}px 80px`,
+                      position: "relative"
+                    }}
+                  >
+                    {renderBgPatternMarkup(String(sIdx), styles)}
+                    
+                    {/* Header Brand Overlay */}
+                    {showHandle && theme !== "ainews" && (
+                      <div className="slide-header" style={{ paddingBottom: `${Math.round(20 * scaleMultiplier)}px` }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "15px" }}>
+                          <div 
+                            style={{ 
+                              height: `${Math.round(36 * scaleMultiplier)}px`, 
+                              width: `${Math.round(36 * scaleMultiplier)}px`, 
+                              borderRadius: "50%", 
+                              background: styles.accentColor, 
+                              color: theme === "cream" ? "#ffffff" : "#000000",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              fontWeight: 900,
+                              fontSize: `${Math.round(16 * scaleMultiplier)}px`
+                            }}
+                          >
+                            {brandName[0] || "G"}
+                          </div>
+                          <span style={{ fontSize: `${Math.round(20 * scaleMultiplier)}px`, fontWeight: 900, color: styles.brandColor, textTransform: "uppercase" }}>
+                            {brandName}
+                          </span>
+                        </div>
+                        <span style={{ fontSize: `${Math.round(16 * scaleMultiplier)}px`, fontWeight: 700, color: styles.brandColor, opacity: 0.6 }}>
+                          {instagramHandle}
+                        </span>
+                      </div>
+                    )}
+ 
+                    {/* Dynamic layouts */}
+                    <div style={{ width: "100%", zIndex: 10, flexGrow: 1, display: "flex", flexDirection: "column", justifyContent: "center" }}>
+                      
+                      {theme === "ainews" ? (() => {
+                        const typo = getAiNewsTypography(slide.title, slide.subtitle, scaleMultiplier);
+                        return (
+                          <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", justifyContent: "flex-start", alignItems: "flex-start", position: "relative", boxSizing: "border-box" }}>
+                            {/* Top Area (Fixed Height 190px) */}
+                            <div 
+                              style={{ 
+                                height: `${Math.round(190 * scaleMultiplier)}px`, 
+                                width: "100%", 
+                                display: "flex", 
+                                flexDirection: "column", 
+                                justifyContent: "flex-start",
+                                gap: `${Math.round(20 * scaleMultiplier)}px`,
+                                margin: 0,
+                                padding: 0
+                              }}
+                            >
+                              <div style={{ fontSize: `${Math.round(18 * scaleMultiplier)}px`, fontWeight: 800, textTransform: "uppercase", letterSpacing: "1.5px", color: "#888888", fontFamily: "'Inter', sans-serif" }}>
+                                {slide.categoryTag !== undefined ? slide.categoryTag : "GROWX INSIGHTS"}
+                              </div>
+                              <h1 style={{ fontSize: `${typo.headlineSize}px`, fontWeight: 900, color: "#000000", lineHeight: typo.headlineLineHeight, letterSpacing: "-1px", fontFamily: "'Inter', sans-serif", margin: 0 }}>
+                                {renderFormattedText(slide.title)}
+                              </h1>
+                            </div>
+
+                            {/* Image Area (Fixed Y & Size: Width 940px, Height 470px, Gap 32px) */}
+                            <div 
+                              style={{ 
+                                position: "absolute",
+                                top: `${Math.round(222 * scaleMultiplier)}px`,
+                                left: 0,
+                                width: "100%",
+                                height: `${Math.round(470 * scaleMultiplier)}px`
+                              }}
+                            >
+                              {renderVisualMediaCard(slide, scaleMultiplier)}
+                            </div>
+
+                            {/* Body Area (Flexible starting at fixed Y offset: 222 + 470 + 40 gap = 732px) */}
+                            <div 
+                              style={{ 
+                                position: "absolute",
+                                top: `${Math.round(732 * scaleMultiplier)}px`,
+                                left: 0,
+                                width: "100%",
+                                bottom: `${Math.round(30 * scaleMultiplier)}px`,
+                                display: "flex",
+                                flexDirection: "column",
+                                justifyContent: "flex-start",
+                                alignItems: "flex-start"
+                              }}
+                            >
+                              <p style={{ fontSize: `${typo.bodySize}px`, color: "#111827", lineHeight: typo.bodyLineHeight, whiteSpace: "pre-line", fontFamily: "'Inter', sans-serif", margin: 0 }}>
+                                {renderFormattedText(slide.subtitle)}
+                              </p>
+                              {renderInteractiveElementMarkup(slide, scaleMultiplier, theme)}
+                            </div>
+                          </div>
+                        );
+                      })() : (
+                        <>
+                          {slide.layout === "title-only" && (
+                            <div style={{ width: "100%" }}>
+                              <h1 className="slide-title">{renderFormattedText(slide.title)}</h1>
+                              <p className="slide-subtitle">{renderFormattedText(slide.subtitle)}</p>
+                              {renderInteractiveElementMarkup(slide, scaleMultiplier, theme)}
+                            </div>
+                          )}
+     
+                          {slide.layout === "bullets" && (
+                            slide.imageEnabled ? (
+                              slide.imageLayout === "centered" ? (
+                                <div style={{ display: "flex", flexDirection: "column", gap: `${Math.round(24 * scaleMultiplier)}px`, width: "100%" }}>
+                                  <h2 className="slide-title" style={{ fontSize: `${Math.round(38 * scaleMultiplier)}px`, textAlign: "left", marginBottom: "0px" }}>
+                                    {renderFormattedText(slide.title)}
+                                  </h2>
+                                  {renderImageOrSvgMarkup(slide, "rounded-2xl border border-white/10", { width: "100%", height: `${Math.round(300 * scaleMultiplier)}px`, objectFit: "cover" }, `${Math.round(300 * scaleMultiplier)}px`)}
+                                  <ul className="slide-bullets" style={{ marginTop: "0px" }}>
+                                    {slide.bullets.map((bullet, bIdx) => (
+                                      <li key={bIdx} className="slide-bullet-item" style={{ fontSize: `${Math.round(20 * scaleMultiplier)}px`, display: "flex", gap: `${Math.round(15 * scaleMultiplier)}px`, alignItems: "flex-start", marginBottom: `${Math.round(12 * scaleMultiplier)}px` }}>
+                                        <span className="slide-bullet-icon" style={{ color: styles.bulletIconColor }}>✔</span>
+                                        <span>{bullet}</span>
+                                      </li>
+                                    ))}
+                                  </ul>
+                                  {renderInteractiveElementMarkup(slide, scaleMultiplier, theme)}
+                                </div>
+                              ) : (
+                                <div style={{ display: "flex", gap: `${Math.round(30 * scaleMultiplier)}px`, alignItems: "center", width: "100%" }}>
+                                  {slide.imageLayout === "split-left" ? (
+                                    <>
+                                      <div style={{ width: "40%", flexShrink: 0 }}>
+                                        {renderImageOrSvgMarkup(slide, "rounded-2xl border border-white/10", { width: "100%", height: `${Math.round(420 * scaleMultiplier)}px`, objectFit: "cover" }, `${Math.round(420 * scaleMultiplier)}px`)}
+                                      </div>
+                                      <div style={{ width: "60%", flexGrow: 1 }}>
+                                        <h2 className="slide-title" style={{ fontSize: `${Math.round(36 * scaleMultiplier)}px`, textAlign: "left", marginBottom: `${Math.round(15 * scaleMultiplier)}px` }}>
+                                          {renderFormattedText(slide.title)}
+                                        </h2>
+                                        <ul className="slide-bullets" style={{ marginTop: "0px" }}>
+                                          {slide.bullets.map((bullet, bIdx) => (
+                                            <li key={bIdx} className="slide-bullet-item" style={{ fontSize: `${Math.round(20 * scaleMultiplier)}px`, display: "flex", gap: `${Math.round(15 * scaleMultiplier)}px`, alignItems: "flex-start", marginBottom: `${Math.round(12 * scaleMultiplier)}px` }}>
+                                              <span className="slide-bullet-icon" style={{ color: styles.bulletIconColor }}>✔</span>
+                                              <span>{bullet}</span>
+                                            </li>
+                                          ))}
+                                        </ul>
+                                      </div>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <div style={{ width: "60%", flexGrow: 1 }}>
+                                        <h2 className="slide-title" style={{ fontSize: `${Math.round(36 * scaleMultiplier)}px`, textAlign: "left", marginBottom: `${Math.round(15 * scaleMultiplier)}px` }}>
+                                          {renderFormattedText(slide.title)}
+                                        </h2>
+                                        <ul className="slide-bullets" style={{ marginTop: "0px" }}>
+                                          {slide.bullets.map((bullet, bIdx) => (
+                                            <li key={bIdx} className="slide-bullet-item" style={{ fontSize: `${Math.round(20 * scaleMultiplier)}px`, display: "flex", gap: `${Math.round(15 * scaleMultiplier)}px`, alignItems: "flex-start", marginBottom: `${Math.round(12 * scaleMultiplier)}px` }}>
+                                              <span className="slide-bullet-icon" style={{ color: styles.bulletIconColor }}>✔</span>
+                                              <span>{bullet}</span>
+                                            </li>
+                                          ))}
+                                        </ul>
+                                      </div>
+                                      <div style={{ width: "40%", flexShrink: 0 }}>
+                                        {renderImageOrSvgMarkup(slide, "rounded-2xl border border-white/10", { width: "100%", height: `${Math.round(420 * scaleMultiplier)}px`, objectFit: "cover" }, `${Math.round(420 * scaleMultiplier)}px`)}
+                                      </div>
+                                    </>
+                                  )}
+                                  {renderInteractiveElementMarkup(slide, scaleMultiplier, theme)}
+                                </div>
+                              )
+                            ) : (
+                              <div style={{ width: "100%" }}>
+                                <h2 className="slide-title" style={{ fontSize: `${Math.round(42 * scaleMultiplier)}px`, textAlign: "left" }}>{renderFormattedText(slide.title)}</h2>
+                                <p className="slide-subtitle" style={{ fontSize: `${Math.round(22 * scaleMultiplier)}px`, textAlign: "left", opacity: 0.8, marginBottom: `${Math.round(30 * scaleMultiplier)}px` }}>{renderFormattedText(slide.subtitle)}</p>
+                                <ul className="slide-bullets">
+                                  {slide.bullets.map((bullet, bIdx) => (
+                                    <li key={bIdx} className="slide-bullet-item" style={{ fontSize: `${Math.round(20 * scaleMultiplier)}px` }}>
+                                      <span className="slide-bullet-icon">✔</span>
+                                      <span>{bullet}</span>
+                                    </li>
+                                  ))}
+                                </ul>
+                                {renderInteractiveElementMarkup(slide, scaleMultiplier, theme)}
+                              </div>
+                            )
+                          )}
+     
+                          {slide.layout === "quote" && (
+                            <div className="slide-quote-box">
+                              <p className="slide-quote-text" style={{ fontSize: `${Math.round(32 * scaleMultiplier)}px` }}>"{renderFormattedText(slide.subtitle)}"</p>
+                              <p className="slide-quote-author" style={{ fontSize: `${Math.round(20 * scaleMultiplier)}px` }}>— {slide.quoteAuthor || "Quote Author"}</p>
+                              {renderInteractiveElementMarkup(slide, scaleMultiplier, theme)}
+                            </div>
+                          )}
+     
+                          {slide.layout === "cta" && (
+                            <div style={{ width: "100%", textAlign: "center" }}>
+                              <div 
+                                style={{ 
+                                  height: `${Math.round(64 * scaleMultiplier)}px`, 
+                                  width: `${Math.round(64 * scaleMultiplier)}px`, 
+                                  borderRadius: `${Math.round(20 * scaleMultiplier)}px`, 
+                                  background: "rgba(255,255,255,0.05)",
+                                  border: "1px solid rgba(255,255,255,0.1)",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  margin: `0 auto ${Math.round(30 * scaleMultiplier)}px auto`,
+                                  color: styles.brandColor
+                                }}
+                              >
+                                <svg width={Math.round(32 * scaleMultiplier)} height={Math.round(32 * scaleMultiplier)} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                  <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
+                                  <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+                                  <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+                                </svg>
+                              </div>
+                              <h1 className="slide-title" style={{ fontSize: `${Math.round(52 * scaleMultiplier)}px` }}>{renderFormattedText(slide.title)}</h1>
+                              <p className="slide-subtitle" style={{ fontSize: `${Math.round(22 * scaleMultiplier)}px`, marginBottom: `${Math.round(40 * scaleMultiplier)}px` }}>{renderFormattedText(slide.subtitle)}</p>
+                              {renderInteractiveElementMarkup(slide, scaleMultiplier, theme)}
+                              <div 
+                                style={{ 
+                                  display: "inline-block", 
+                                  padding: `${Math.round(16 * scaleMultiplier)}px ${Math.round(36 * scaleMultiplier)}px`, 
+                                  borderRadius: `${Math.round(16 * scaleMultiplier)}px`, 
+                                  background: styles.accentColor, 
+                                  color: theme === "cream" ? "#ffffff" : "#000000",
+                                  fontSize: `${Math.round(18 * scaleMultiplier)}px`, 
+                                  fontWeight: 900, 
+                                  letterSpacing: "2px", 
+                                  textTransform: "uppercase" 
+                                }}
+                              >
+                                SWIPE LEFT TO FOLLOW
+                              </div>
+                            </div>
+                          )}
+                        </>
+                      )}
+
+                    </div>
+ 
+                    {/* Footer brand / paging overlay */}
+                    <div className="slide-footer" style={{ borderTop: theme === "ainews" ? "1px solid #e5e7eb" : "none", paddingTop: `${Math.round(18 * scaleMultiplier)}px` }}>
+                      {theme === "ainews" ? (
+                        <span style={{ fontSize: `${Math.round(20 * scaleMultiplier)}px`, fontWeight: 800, fontFamily: "'Fira Code', monospace", color: "#000000" }}>
+                          [{brandName}]
+                        </span>
+                      ) : (
+                        <span style={{ fontSize: `${Math.round(16 * scaleMultiplier)}px`, fontWeight: 900, color: styles.brandColor, opacity: 0.6, letterSpacing: "1px" }}>
+                          {slide.layout === "cta" ? "SAVE THIS POST" : "SWIPE LEFT ➔"}
+                        </span>
+                      )}
+                      {showPageNumber && (
+                        <span style={{ fontSize: `${Math.round(20 * scaleMultiplier)}px`, fontWeight: theme === "ainews" ? 500 : 900, fontStyle: theme === "ainews" ? "normal" : "italic", color: theme === "ainews" ? "#94a3b8" : styles.brandColor, fontFamily: theme === "ainews" ? "'Fira Code', monospace" : styles.subtitleFont }}>
+                          {String(sIdx + 1).padStart(2, '0')}/{String(slides.length).padStart(2, '0')}
+                        </span>
+                      )}
+                    </div>
+ 
+                    {/* Progress Bar Line */}
+                    {showProgressBar && (
+                      <div className="progress-bar-container">
+                        <div className="progress-bar-fill" style={{ width: `${((sIdx + 1) / slides.length) * 100}%` }} />
+                      </div>
+                    )}
+ 
+                  </div>
+                </foreignObject>
+              </svg>
+            );
+          })}
+        </div>
+ 
+      </div>
+    </div>
+  );
+}

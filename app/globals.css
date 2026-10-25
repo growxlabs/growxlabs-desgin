@@ -1,0 +1,1992 @@
+@import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;700;800&family=Inter:wght@400;500;700;800;900&display=swap');
+@import "tailwindcss";
+@import "./blog-article-system.css";
+
+:root {
+  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-serif: "Playfair Display", Georgia, "Times New Roman", serif;
+  --font-lora: Lora, Georgia, "Times New Roman", serif;
+  --font-outfit: Outfit, "Segoe UI", Arial, sans-serif;
+  --font-mono: "Fira Code", monospace;
+}
+@custom-variant dark (&:where(.dark, .dark *));
+@import "tw-animate-css";
+/*
+ * Candidate portal theme boundary.
+ * Careers is a separate public experience from the admin OS, so it must not
+ * inherit the root ThemeProvider's system/dark mode or its global tokens.
+ */
+html:has(.candidate-portal-theme),
+body:has(.candidate-portal-theme) {
+  color-scheme: light;
+  background: #F7F8FA;
+}
+
+.candidate-portal-theme {
+  --background: #F7F8FA;
+  --foreground: #111827;
+  --card: #FFFFFF;
+  --card-foreground: #111827;
+  --popover: #FFFFFF;
+  --popover-foreground: #111827;
+  --muted: #F7F8FA;
+  --muted-foreground: #64748B;
+  --border: #E5E7EB;
+  --input: #FFFFFF;
+  color-scheme: light;
+  min-height: 100vh;
+  background: #F7F8FA;
+  color: #111827;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.candidate-portal-theme,
+.candidate-portal-theme * {
+  color-scheme: light;
+}
+
+.candidate-portal-theme :where(h1, h2, h3, h4, h5, h6, p, span, a, button, dt, dd) {
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+}
+
+/*
+ * Workspace theme boundary.
+ * Employee OS & Healthcare Lead Manager are light-themed professional workspaces,
+ * so they must not inherit the root ThemeProvider's system/dark mode.
+ */
+html:has(.workspace-theme),
+body:has(.workspace-theme) {
+  color-scheme: light !important;
+  background: #F8FAFC !important;
+  color: #0F172A !important;
+}
+
+.workspace-theme {
+  --background: #F8FAFC;
+  --foreground: #0F172A;
+  --card: #FFFFFF;
+  --card-foreground: #0F172A;
+  --popover: #FFFFFF;
+  --popover-foreground: #0F172A;
+  --muted: #F1F5F9;
+  --muted-foreground: #64748B;
+  --border: #E2E8F0;
+  --input: #FFFFFF;
+  color-scheme: light !important;
+  min-height: 100vh;
+  background: #F8FAFC !important;
+  color: #0F172A !important;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.workspace-theme,
+.workspace-theme * {
+  color-scheme: light;
+}
+
+@layer reset, base, tokens, recipes, utilities;
+
+@media print {
+  body:has(.ai-solution-document) { background: white !important; }
+  body:has(.ai-solution-document) aside,
+  body:has(.ai-solution-document) nav,
+  body:has(.ai-solution-document) .no-print { display: none !important; }
+  body:has(.ai-solution-document) main { margin: 0 !important; padding: 0 !important; max-width: none !important; }
+  .ai-solution-document { width: 100% !important; border: 0 !important; box-shadow: none !important; position: static !important; overflow: visible !important; }
+  .ai-solution-document section,
+  .ai-solution-document header,
+  .ai-solution-document footer { break-inside: avoid; page-break-inside: avoid; }
+  body:has(.solution-architecture-document) aside,
+  body:has(.solution-architecture-document) nav,
+  body:has(.solution-architecture-document) .no-print { display: none !important; }
+  body:has(.solution-architecture-document) main { margin: 0 !important; padding: 0 !important; max-width: none !important; }
+  .solution-architecture-document { width: 100% !important; border: 0 !important; box-shadow: none !important; }
+  .solution-architecture-document section,
+  .solution-architecture-document header,
+  .solution-architecture-document footer { break-inside: avoid; page-break-inside: avoid; }
+  html,
+  body {
+    background: #fff !important;
+  }
+
+  .site-navigation,
+  .document-action-bar,
+  .whatsapp-button,
+  .nextjs-toast,
+  [data-next-badge-root] {
+    display: none !important;
+  }
+
+  .document-shell {
+    background: #fff !important;
+    padding-bottom: 0 !important;
+  }
+
+  .document-shell > header,
+  .document-shell footer {
+    position: static !important;
+    box-shadow: none !important;
+  }
+
+  .document-container {
+    width: 100% !important;
+    max-width: none !important;
+  }
+
+  .assessment-section,
+  .assessment-section fieldset,
+  .assessment-section section {
+    break-inside: avoid;
+  }
+
+  .assessment-section h2,
+  .assessment-section h3 {
+    break-after: avoid;
+  }
+
+  body:has(.assessment-document) * {
+    visibility: hidden !important;
+  }
+
+  .assessment-document,
+  .assessment-document * {
+    visibility: visible !important;
+  }
+
+  .assessment-document {
+    position: static !important;
+    width: 100%;
+    overflow: visible !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    color: #0f172a !important;
+    font-size: 14px !important;
+    line-height: 1.75 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .assessment-document > header {
+    padding: 44px 48px !important;
+  }
+
+  .assessment-document > div {
+    padding-left: 48px !important;
+    padding-right: 48px !important;
+  }
+
+  .assessment-document-section {
+    padding-top: 44px !important;
+    padding-bottom: 44px !important;
+  }
+
+  .assessment-document-section > div:first-child {
+    margin-bottom: 28px !important;
+  }
+
+  .assessment-document-answer {
+    display: grid !important;
+    grid-template-columns: 240px minmax(0, 1fr) !important;
+    column-gap: 32px !important;
+    row-gap: 8px !important;
+    margin-bottom: 24px !important;
+    font-size: 14px !important;
+    line-height: 1.75 !important;
+  }
+
+  .assessment-document-answer dt,
+  .assessment-document-answer dd {
+    font-size: 14px !important;
+    line-height: 1.75 !important;
+    overflow-wrap: anywhere !important;
+    word-break: break-word !important;
+  }
+
+  .assessment-document-answer ul {
+    display: block !important;
+    list-style: disc outside !important;
+    padding-left: 20px !important;
+  }
+
+  .assessment-document-answer li {
+    display: list-item !important;
+    margin-bottom: 4px !important;
+  }
+
+  .assessment-field-row,
+  .assessment-metadata-item,
+  .signature-block,
+  .assessment-document-answer,
+  .assessment-document-footer {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .assessment-document-section {
+    break-inside: auto;
+    page-break-inside: auto;
+  }
+
+  .assessment-document-section h2,
+  .assessment-document-answer dt {
+    break-after: avoid;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  .print-page-number::after {
+    content: " " counter(page);
+  }
+}
+
+@page {
+  size: A4 portrait;
+  margin: 14mm 14mm 16mm;
+}
+
+.pdf-export .no-print {
+  display: none !important;
+}
+
+
+@theme inline {
+  --font-sans: var(--font-sans), sans-serif;
+  --font-serif: var(--font-serif), serif;
+  --font-lora: var(--font-lora), serif;
+  --font-outfit: var(--font-outfit), sans-serif;
+  --font-mono: "Fira Code", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --color-everyblue: #C0F0FB;
+  --color-postgray: #FDFAF7;
+  --color-pureblack: #020202;
+}
+
+/* ═══════════════════════════════════════════════════ */
+/* AIR FORCE BLUE LIGHT THEME — Marketing / Public pages */
+/* ═══════════════════════════════════════════════════ */
+:root {
+  --background: #A2BECC;
+  --foreground: #17252D;
+  --card: #F4F8FA;
+  --card-foreground: #17252D;
+  --popover: #FAFCFD;
+  --popover-foreground: #17252D;
+  --primary: #A2BECC;
+  --primary-foreground: #17252D;
+  --secondary: #E5EFF4;
+  --secondary-foreground: #17252D;
+  --muted: #E5EFF4;
+  --muted-foreground: #55788D;
+  --accent: #A2BECC;
+  --accent-foreground: #17252D;
+  --destructive: #DC2626;
+  --destructive-foreground: #FFFFFF;
+  --border: #D5E2E9;
+  --input: #F4F8FA;
+  --ring: #A2BECC;
+  --radius: 0.5rem;
+
+  /* ═══ GrowxLabs Air Force Blue Design Palette ═══ */
+  --airforce-primary: #A2BECC;
+  --airforce-bg: #A2BECC;
+  --airforce-card: #F4F8FA;
+  --airforce-surface: #E5EFF4;
+  --airforce-reading: #FAFCFD;
+  --airforce-text: #17252D;
+  --airforce-accent: #55788D;
+  --airforce-border: #D5E2E9;
+}
+
+/* ═══════════════════════════════════════════════════ */
+/* LIGHT THEME — Blog / Reading / Essay pages          */
+/* ═══════════════════════════════════════════════════ */
+.posts-page {
+  --background: #FAFCFD;
+  --foreground: #17252D;
+  --card: #F4F8FA;
+  --card-foreground: #17252D;
+  --popover: #FAFCFD;
+  --popover-foreground: #17252D;
+  --primary: #17252D;
+  --primary-foreground: #FAFCFD;
+  --secondary: #E5EFF4;
+  --secondary-foreground: #17252D;
+  --muted: #E5EFF4;
+  --muted-foreground: #55788D;
+  --accent: #A2BECC;
+  --accent-foreground: #17252D;
+  --destructive: #DC2626;
+  --destructive-foreground: #FFFFFF;
+  --border: #D5E2E9;
+  --input: #F4F8FA;
+  --ring: #A2BECC;
+}
+
+/* ═══════════════════════════════════════════════════ */
+/* NOTION LIGHT THEME — Dashboard pages (Default Light)*/
+/* ═══════════════════════════════════════════════════ */
+.notion-theme,
+html:not(.dark) .notion-theme,
+html.light .notion-theme {
+  --background: #f6f5f4;
+  --foreground: #000000;
+  --card: #ffffff;
+  --card-foreground: #000000;
+  --popover: #ffffff;
+  --popover-foreground: #000000;
+  --primary: #0075de;
+  --primary-foreground: #ffffff;
+  --secondary: #ffffff;
+  --secondary-foreground: #31302e;
+  --muted: #f6f5f4;
+  --muted-foreground: #615d59;
+  --accent: #0075de;
+  --accent-foreground: #ffffff;
+  --destructive: #dc2626;
+  --destructive-foreground: #ffffff;
+  --border: #e6e6e6;
+  --input: #ffffff;
+  --ring: #0075de;
+  
+  --surface-1: #ffffff;
+  --surface-2: #f6f5f4;
+  --border-subtle: #e6e6e6;
+  --border-hover: #0075de;
+  
+  --text-primary: #000000;
+  --text-secondary: #31302e;
+  --text-muted: #615d59;
+  --text-tertiary: #a39e98;
+
+  /* Figma-Quality Design Workspace Tokens */
+  --app-bg: #f6f5f4;
+  --panel-bg: #ffffff;
+  --panel-raised: #fbfbfb;
+  --surface-hover: #f3f3f2;
+  --surface-active: #eae9e8;
+  --brand: #1687f8;
+  --danger: #ef4444;
+
+  --topbar-height: 64px;
+  --icon-rail-width: 72px;
+  --left-panel-width: 292px;
+  --right-panel-width: 340px;
+
+  /* Inspector Design Tokens */
+  --inspector-width: 336px;
+  --inspector-bg: var(--panel-bg);
+  --inspector-surface: var(--panel-raised);
+  --inspector-surface-hover: var(--surface-hover);
+  --inspector-surface-active: var(--surface-active);
+  --inspector-text: var(--text-primary);
+  --inspector-text-secondary: var(--text-secondary);
+  --inspector-text-muted: var(--text-muted);
+  --inspector-border: rgba(0, 0, 0, 0.08);
+  --inspector-border-strong: rgba(0, 0, 0, 0.14);
+  --inspector-brand: var(--brand);
+  --inspector-danger: var(--danger);
+
+  /* Spacing Scale */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+
+  /* Radix Component Radii */
+  --radius-control: 8px;
+  --radius-button: 9px;
+  --radius-row: 9px;
+  --radius-card: 14px;
+  --radius-panel: 16px;
+  --radius-modal: 18px;
+  --radius-popover: 12px;
+  --radius-menu: 11px;
+  --radius-dialog: 16px;
+}
+
+/* ═══════════════════════════════════════════════════ */
+/* VERCEL DARK THEME — Dashboard Dark Mode Override    */
+/* ═══════════════════════════════════════════════════ */
+html.dark,
+.dark {
+  --background: #070707;
+  --foreground: #ffffff;
+  --card: #101010;
+  --card-foreground: #ffffff;
+  --popover: #202020;
+  --popover-foreground: #ffffff;
+  --primary: #C0F0FB;
+  --primary-foreground: #000000;
+  --secondary: #171717;
+  --secondary-foreground: #ededed;
+  --muted: #121212;
+  --muted-foreground: #a0a0a0;
+  --accent: #C0F0FB;
+  --accent-foreground: #000000;
+  --destructive: #f43f5e;
+  --destructive-foreground: #ffffff;
+  --border: #262626;
+  --input: #121212;
+  --ring: #C0F0FB;
+  
+  --surface-1: #101010;
+  --surface-2: #0A0A0A;
+  --border-subtle: #262626;
+  --border-default: #262626;
+  --border-hover: #C0F0FB;
+  
+  --text-primary: #ffffff;
+  --text-secondary: #a3a3a3;
+  --text-muted: #737373;
+  --text-tertiary: #525252;
+
+  /* Figma-Quality Design Workspace Tokens */
+  --app-bg: #070707;
+  --panel-bg: #0A0A0A;
+  --panel-raised: #1B1B1B;
+  --surface-hover: #171717;
+  --surface-active: #1D1D1D;
+
+  /* Dark Inspector Tokens */
+  --inspector-border: #262626;
+  --inspector-border-strong: #262626;
+}
+
+/* Dashboard Notion Dark Mode Specifics */
+html.dark .notion-theme,
+.dark .notion-theme,
+.dark.notion-theme {
+  --background: #09090b;
+  --foreground: #f4f4f5;
+  --card: #141416;
+  --card-foreground: #f4f4f5;
+  --popover: #18181b;
+  --popover-foreground: #f4f4f5;
+  --primary: #0075de;
+  --primary-foreground: #ffffff;
+  --secondary: #18181b;
+  --secondary-foreground: #f4f4f5;
+  --muted: #18181b;
+  --muted-foreground: #a1a1aa;
+  --accent: #0075de;
+  --accent-foreground: #ffffff;
+  --destructive: #dc2626;
+  --destructive-foreground: #ffffff;
+  --border: #27272a;
+  --input: #18181b;
+  --ring: #0075de;
+  --surface-1: #141416;
+  --surface-2: #1e1e20;
+  --border-subtle: #27272a;
+  --border-hover: #0075de;
+  --text-primary: #f4f4f5;
+  --text-secondary: #a1a1aa;
+  --text-muted: #71717a;
+  --text-tertiary: #52525b;
+  --app-bg: #09090b;
+  --panel-bg: #141416;
+  --panel-raised: #1c1c1f;
+  --surface-hover: #1f1f23;
+  --surface-active: #27272a;
+}
+
+/* ═══════════════════════════════════════════════════════════════ */
+/* CHATGPT ACCENT COLOR PRESETS (Admin & Notion Workspace)         */
+/* ═══════════════════════════════════════════════════════════════ */
+
+/* Default Blue (Scoped strictly to Notion/Admin Workspace) */
+.notion-theme[data-accent="blue"],
+.notion-theme[data-accent="default"],
+.notion-theme:not([data-accent]) {
+  --primary: #0075de;
+  --primary-hover: #005bab;
+  --primary-foreground: #ffffff;
+  --accent: #0075de;
+  --accent-soft: rgba(0, 117, 222, 0.12);
+  --accent-border: rgba(0, 117, 222, 0.25);
+  --ring: #0075de;
+  --border-hover: #0075de;
+  --brand: #1687f8;
+}
+
+/* Green (ChatGPT Emerald) */
+[data-accent="green"],
+[data-accent="green"] .notion-theme,
+.notion-theme[data-accent="green"] {
+  --primary: #10b981 !important;
+  --primary-hover: #059669 !important;
+  --primary-foreground: #ffffff !important;
+  --accent: #10b981 !important;
+  --accent-soft: rgba(16, 185, 129, 0.14) !important;
+  --accent-border: rgba(16, 185, 129, 0.28) !important;
+  --ring: #10b981 !important;
+  --border-hover: #10b981 !important;
+  --brand: #10b981 !important;
+}
+
+/* Yellow (Warm Amber) */
+[data-accent="yellow"],
+[data-accent="yellow"] .notion-theme,
+.notion-theme[data-accent="yellow"] {
+  --primary: #f59e0b !important;
+  --primary-hover: #d97706 !important;
+  --primary-foreground: #000000 !important;
+  --accent: #f59e0b !important;
+  --accent-soft: rgba(245, 158, 11, 0.16) !important;
+  --accent-border: rgba(245, 158, 11, 0.3) !important;
+  --ring: #f59e0b !important;
+  --border-hover: #f59e0b !important;
+  --brand: #f59e0b !important;
+}
+
+/* Pink (Rose) */
+[data-accent="pink"],
+[data-accent="pink"] .notion-theme,
+.notion-theme[data-accent="pink"] {
+  --primary: #ec4899 !important;
+  --primary-hover: #db2777 !important;
+  --primary-foreground: #ffffff !important;
+  --accent: #ec4899 !important;
+  --accent-soft: rgba(236, 72, 153, 0.14) !important;
+  --accent-border: rgba(236, 72, 153, 0.28) !important;
+  --ring: #ec4899 !important;
+  --border-hover: #ec4899 !important;
+  --brand: #ec4899 !important;
+}
+
+/* Orange (Tangerine) */
+[data-accent="orange"],
+[data-accent="orange"] .notion-theme,
+.notion-theme[data-accent="orange"] {
+  --primary: #f97316 !important;
+  --primary-hover: #ea580c !important;
+  --primary-foreground: #ffffff !important;
+  --accent: #f97316 !important;
+  --accent-soft: rgba(249, 115, 22, 0.14) !important;
+  --accent-border: rgba(249, 115, 22, 0.28) !important;
+  --ring: #f97316 !important;
+  --border-hover: #f97316 !important;
+  --brand: #f97316 !important;
+}
+
+/* Purple (Electric Violet) */
+[data-accent="purple"],
+[data-accent="purple"] .notion-theme,
+.notion-theme[data-accent="purple"] {
+  --primary: #8b5cf6 !important;
+  --primary-hover: #7c3aed !important;
+  --primary-foreground: #ffffff !important;
+  --accent: #8b5cf6 !important;
+  --accent-soft: rgba(139, 92, 246, 0.14) !important;
+  --accent-border: rgba(139, 92, 246, 0.28) !important;
+  --ring: #8b5cf6 !important;
+  --border-hover: #8b5cf6 !important;
+  --brand: #8b5cf6 !important;
+}
+
+/* White / Monochrome (Light Mode: Black, Dark Mode: White) */
+[data-accent="white"],
+[data-accent="white"] .notion-theme,
+.notion-theme[data-accent="white"] {
+  --primary: #18181b !important;
+  --primary-hover: #27272a !important;
+  --primary-foreground: #ffffff !important;
+  --accent: #18181b !important;
+  --accent-soft: rgba(0, 0, 0, 0.08) !important;
+  --accent-border: rgba(0, 0, 0, 0.2) !important;
+  --ring: #18181b !important;
+  --border-hover: #18181b !important;
+  --brand: #18181b !important;
+}
+
+html.dark[data-accent="white"],
+html.dark[data-accent="white"] .notion-theme,
+.dark[data-accent="white"],
+.dark[data-accent="white"] .notion-theme,
+html.dark .notion-theme[data-accent="white"],
+.dark .notion-theme[data-accent="white"] {
+  --primary: #ffffff !important;
+  --primary-hover: #e4e4e7 !important;
+  --primary-foreground: #000000 !important;
+  --accent: #ffffff !important;
+  --accent-soft: rgba(255, 255, 255, 0.15) !important;
+  --accent-border: rgba(255, 255, 255, 0.3) !important;
+  --ring: #ffffff !important;
+  --border-hover: #ffffff !important;
+  --brand: #ffffff !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════ */
+/* HARDCODED CLASS OVERRIDES FOR NON-DEFAULT ACCENTS               */
+/* ═══════════════════════════════════════════════════════════════ */
+[data-accent]:not([data-accent="blue"]):not([data-accent="default"]) .bg-\[\#0075de\],
+[data-accent]:not([data-accent="blue"]):not([data-accent="default"]) button.bg-\[\#0075de\],
+[data-accent]:not([data-accent="blue"]):not([data-accent="default"]) a.bg-\[\#0075de\] {
+  background-color: var(--primary) !important;
+  color: var(--primary-foreground) !important;
+}
+
+[data-accent]:not([data-accent="blue"]):not([data-accent="default"]) .hover\:bg-\[\#005bab\]:hover,
+[data-accent]:not([data-accent="blue"]):not([data-accent="default"]) .hover\:bg-\[\#0075de\]\/90:hover,
+[data-accent]:not([data-accent="blue"]):not([data-accent="default"]) .hover\:bg-blue-600:hover,
+[data-accent]:not([data-accent="blue"]):not([data-accent="default"]) .hover\:bg-blue-700:hover {
+  background-color: var(--primary-hover) !important;
+}
+
+[data-accent]:not([data-accent="blue"]):not([data-accent="default"]) .text-\[\#0075de\],
+[data-accent]:not([data-accent="blue"]):not([data-accent="default"]) span.text-\[\#0075de\],
+[data-accent]:not([data-accent="blue"]):not([data-accent="default"]) .dark\:text-blue-400 {
+  color: var(--primary) !important;
+}
+
+[data-accent]:not([data-accent="blue"]):not([data-accent="default"]) .hover\:text-\[\#0075de\]:hover,
+[data-accent]:not([data-accent="blue"]):not([data-accent="default"]) .dark\:hover\:text-blue-400:hover {
+  color: var(--primary-hover) !important;
+}
+
+[data-accent]:not([data-accent="blue"]):not([data-accent="default"]) .border-\[\#0075de\],
+[data-accent]:not([data-accent="blue"]):not([data-accent="default"]) .hover\:border-\[\#0075de\]\/30:hover,
+[data-accent]:not([data-accent="blue"]):not([data-accent="default"]) .hover\:border-\[\#0075de\]\/40:hover {
+  border-color: var(--primary) !important;
+}
+
+[data-accent]:not([data-accent="blue"]):not([data-accent="default"]) .bg-\[\#0075de\]\/10,
+[data-accent]:not([data-accent="blue"]):not([data-accent="default"]) .bg-\[\#0075de\]\/15,
+[data-accent]:not([data-accent="blue"]):not([data-accent="default"]) .bg-\[\#0075de\]\/5,
+[data-accent]:not([data-accent="blue"]):not([data-accent="default"]) .dark\:bg-blue-500\/15,
+[data-accent]:not([data-accent="blue"]):not([data-accent="default"]) .dark\:bg-blue-500\/20 {
+  background-color: var(--accent-soft) !important;
+}
+
+[data-accent]:not([data-accent="blue"]):not([data-accent="default"]) .border-\[\#0075de\]\/10,
+[data-accent]:not([data-accent="blue"]):not([data-accent="default"]) .border-\[\#0075de\]\/20,
+[data-accent]:not([data-accent="blue"]):not([data-accent="default"]) .border-\[\#0075de\]\/30 {
+  border-color: var(--accent-border) !important;
+}
+
+[data-accent]:not([data-accent="blue"]):not([data-accent="default"]) .focus\:border-\[\#0075de\]:focus,
+[data-accent]:not([data-accent="blue"]):not([data-accent="default"]) .focus\:border-\[\#0075de\]\/40:focus {
+  border-color: var(--primary) !important;
+}
+
+/* Notion Specific Layout Overrides */
+.notion-theme {
+  color: var(--text-primary) !important;
+  font-family: Inter, -apple-system, sans-serif !important;
+}
+
+.notion-theme h1, 
+.notion-theme h2, 
+.notion-theme h3, 
+.notion-theme h4, 
+.notion-theme h5, 
+.notion-theme h6,
+.notion-theme [class*="heading-"],
+.notion-theme [class*="font-serif"] {
+  font-family: Inter, -apple-system, sans-serif !important;
+  color: var(--text-primary) !important;
+  letter-spacing: -0.025em !important;
+  font-weight: 700 !important;
+}
+
+.notion-theme ::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.15) !important;
+}
+.notion-theme ::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.3) !important;
+}
+
+/* Notion Surface/Card class safety hooks */
+.notion-theme .bg-\[var\(--surface-1\)\],
+.notion-theme .bg-white\/\[0\.02\],
+.notion-theme .bg-white\/\[0\.03\],
+.notion-theme .bg-white\/\[0\.04\],
+.notion-theme .bg-white\/\[0\.05\],
+.notion-theme .bg-zinc-900,
+.notion-theme .bg-slate-900,
+.notion-theme .bg-neutral-900,
+.notion-theme .bg-\[\#18181b\],
+.notion-theme .bg-\[\#141416\] {
+  background-color: var(--card) !important;
+}
+
+.notion-theme .bg-\[var\(--surface-2\)\],
+.notion-theme .bg-white\/5,
+.notion-theme .bg-white\/10,
+.notion-theme .bg-zinc-800,
+.notion-theme .bg-slate-800,
+.notion-theme .bg-neutral-800 {
+  background-color: var(--background) !important;
+}
+
+.notion-theme .border-\[var\(--border-subtle\)\],
+.notion-theme .border-white\/5,
+.notion-theme .border-white\/10,
+.notion-theme .border-zinc-800,
+.notion-theme .border-slate-800,
+.notion-theme .border-neutral-800,
+.notion-theme .border-white\/20,
+.notion-theme .border-white\/30 {
+  border-color: var(--border-subtle) !important;
+}
+
+/* Text overrides: mapping white-text classes to theme primary text inside notion-theme */
+.notion-theme .text-white,
+.notion-theme .text-neutral-100,
+.notion-theme .text-slate-100,
+.notion-theme .text-zinc-100 {
+  color: var(--text-primary) !important;
+}
+
+/* Keep labels readable when a semantic button explicitly uses white text. */
+.notion-theme button.text-white {
+  color: #ffffff !important;
+}
+
+.notion-theme .text-white\/40,
+.notion-theme .text-white\/60,
+.notion-theme .text-\[var\(--text-secondary\)\] {
+  color: var(--text-secondary) !important;
+}
+.notion-theme .text-\[var\(--text-secondary\)\],
+.notion-theme .text-slate-300,
+.notion-theme .text-zinc-300,
+.notion-theme .text-neutral-300 {
+  color: var(--text-secondary) !important;
+}
+
+.notion-theme .text-white\/20,
+.notion-theme .text-white\/30,
+.notion-theme .text-\[var\(--text-muted\)\],
+.notion-theme .text-slate-400,
+.notion-theme .text-zinc-400,
+.notion-theme .text-neutral-400 {
+  color: var(--text-muted) !important;
+}
+
+.notion-theme .text-\[var\(--text-tertiary\)\],
+.notion-theme .text-slate-500,
+.notion-theme .text-zinc-500,
+.notion-theme .text-neutral-500,
+.notion-theme .text-\[\#9CA3AF\] {
+  color: var(--text-tertiary) !important;
+}
+
+/* Hover text adjustments */
+.notion-theme .hover\:text-white:hover,
+.notion-theme .group:hover .group-hover\:text-white {
+  color: var(--text-primary) !important;
+}
+
+/* Primary buttons/badges text override preservation */
+.notion-theme button.bg-primary,
+.notion-theme button.bg-\[\#355CFF\],
+.notion-theme button.bg-primary .text-white,
+.notion-theme button.bg-\[\#355CFF\] .text-white,
+.notion-theme .bg-primary .text-white,
+.notion-theme .bg-\[\#355CFF\] .text-white,
+.notion-theme .bg-primary.text-white,
+.notion-theme .bg-red-500 .text-white,
+.notion-theme .bg-red-600 .text-white,
+.notion-theme .bg-emerald-600 .text-white,
+.notion-theme .bg-green-600 .text-white,
+.notion-theme .bg-primary .text-primary-foreground,
+.notion-theme .bg-\[\#355CFF\] .text-primary-foreground {
+  color: #ffffff !important;
+}
+
+/* Background tag/icon color correction inside notion-theme */
+.notion-theme .bg-white\/5 {
+  background-color: rgba(0, 0, 0, 0.04) !important;
+}
+.notion-theme .bg-white\/10 {
+  background-color: rgba(0, 0, 0, 0.08) !important;
+}
+.notion-theme .text-white\/80 {
+  color: var(--text-secondary) !important;
+}
+
+/* Accent labels */
+.notion-theme .text-blue-400 { color: #0075de !important; }
+.notion-theme .bg-blue-400\/10 { background-color: rgba(0, 117, 222, 0.08) !important; }
+.notion-theme .border-blue-400\/20 { border-color: rgba(0, 117, 222, 0.15) !important; }
+
+.notion-theme .text-primary { color: #0075de !important; }
+.notion-theme .bg-primary\/10 { background-color: rgba(0, 117, 222, 0.08) !important; }
+.notion-theme .border-primary\/20 { border-color: rgba(0, 117, 222, 0.15) !important; }
+.notion-theme .border-primary\/10 { border-color: rgba(0, 117, 222, 0.1) !important; }
+
+.notion-theme .text-amber-400 { color: #dd5b00 !important; }
+.notion-theme .bg-amber-400\/10 { background-color: rgba(221, 91, 0, 0.08) !important; }
+.notion-theme .border-amber-400\/20 { border-color: rgba(221, 91, 0, 0.15) !important; }
+
+.notion-theme .text-purple-400 { color: #8a3ffc !important; }
+.notion-theme .bg-purple-400\/10 { background-color: rgba(138, 63, 252, 0.08) !important; }
+.notion-theme .border-purple-400\/20 { border-color: rgba(138, 63, 252, 0.15) !important; }
+
+.notion-theme .text-green-500 { color: #1aae39 !important; }
+.notion-theme .bg-green-500\/10 { background-color: rgba(26, 174, 57, 0.08) !important; }
+
+/* Notion-style inputs */
+html:not(.dark) .notion-theme input,
+html:not(.dark) .notion-theme select,
+html:not(.dark) .notion-theme textarea,
+html.light .notion-theme input,
+html.light .notion-theme select,
+html.light .notion-theme textarea {
+  background-color: #ffffff !important;
+  color: var(--text-primary) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 4px !important;
+}
+.dark .notion-theme input,
+.dark .notion-theme select,
+.dark .notion-theme textarea {
+  background-color: var(--card) !important;
+  color: var(--text-primary) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 4px !important;
+}
+.notion-theme input:focus,
+.notion-theme select:focus,
+.notion-theme textarea:focus {
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 1px var(--primary) !important;
+}
+
+/* Notion-style tables */
+.notion-theme table {
+  background-color: var(--card) !important;
+  border-collapse: collapse !important;
+}
+.notion-theme th {
+  background-color: var(--background) !important;
+  color: var(--text-muted) !important;
+  font-weight: 600 !important;
+  font-size: 11px !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+  border-bottom: 1px solid var(--border-subtle) !important;
+  padding: 8px 12px !important;
+}
+.notion-theme td {
+  border-bottom: 1px solid var(--border-subtle) !important;
+  padding: 10px 12px !important;
+  color: var(--text-secondary) !important;
+}
+
+/* Notion-style utility buttons */
+html:not(.dark) .notion-theme .button-utility,
+html:not(.dark) .notion-theme button[class*="border-white/"]:not(.gxl-studio-editor *),
+html.light .notion-theme .button-utility,
+html.light .notion-theme button[class*="border-white/"]:not(.gxl-studio-editor *) {
+  background-color: #ffffff !important;
+  color: var(--text-primary) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 6px !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+}
+html:not(.dark) .notion-theme .button-utility:hover,
+html:not(.dark) .notion-theme button[class*="border-white/"]:not(.gxl-studio-editor *):hover,
+html.light .notion-theme .button-utility:hover,
+html.light .notion-theme button[class*="border-white/"]:not(.gxl-studio-editor *):hover {
+  background-color: #f6f5f4 !important;
+}
+.dark .notion-theme .button-utility,
+.dark .notion-theme button[class*="border-white/"]:not(.gxl-studio-editor *) {
+  background-color: var(--card) !important;
+  color: var(--text-primary) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 6px !important;
+  box-shadow: none !important;
+}
+.dark .notion-theme .button-utility:hover,
+.dark .notion-theme button[class*="border-white/"]:not(.gxl-studio-editor *):hover {
+  background-color: var(--surface-2) !important;
+}
+
+.notion-theme .glass-card,
+.notion-theme .growx-card,
+.notion-theme [class*="card"] {
+  background-color: var(--card) !important;
+  border: 1px solid var(--border) !important;
+  box-shadow: none !important;
+}
+
+/* ═══════════════════════════════════════════════════ */
+/* NOTION THEME OVERRIDES FOR HARDCODED UTILITIES       */
+/* ═══════════════════════════════════════════════════ */
+
+/* Base container background overrides */
+.notion-theme .bg-\[\#0a0a0b\],
+.notion-theme .bg-zinc-950,
+.notion-theme .bg-neutral-950,
+.notion-theme .bg-black,
+.notion-theme .bg-\[\#121212\],
+.notion-theme .bg-\[\#121216\] {
+  background-color: var(--card) !important;
+}
+
+.notion-theme .bg-\[\#0f0f11\],
+.notion-theme .bg-\[\#0f0f12\] {
+  background-color: var(--background) !important;
+}
+
+.notion-theme .bg-\[\#141416\] {
+  background-color: var(--card) !important;
+  border-color: var(--border) !important;
+}
+
+.notion-theme .bg-\[\#0D1426\]\/45,
+.notion-theme .bg-\[\#0D1426\]\/30 {
+  background-color: var(--card) !important;
+}
+
+.notion-theme .bg-\[\#0a0a0b\]\/80 {
+  background-color: rgba(255, 255, 255, 0.8) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+}
+
+/* Accent blue / GXL brand primary overrides */
+.notion-theme .bg-\[\#355CFF\],
+.notion-theme .bg-blue-600 {
+  background-color: var(--primary) !important;
+}
+
+.notion-theme .text-\[\#355CFF\],
+.notion-theme .text-blue-500 {
+  color: var(--primary) !important;
+}
+
+.notion-theme .bg-\[\#355CFF\]\/\[0\.03\] {
+  background-color: rgba(0, 117, 222, 0.03) !important;
+}
+
+.notion-theme .bg-\[\#355CFF\]\/5 {
+  background-color: rgba(0, 117, 222, 0.05) !important;
+}
+
+.notion-theme .bg-\[\#355CFF\]\/10,
+.notion-theme .bg-\[\#355CFF\]\/15 {
+  background-color: rgba(0, 117, 222, 0.1) !important;
+}
+
+.notion-theme .bg-\[\#355CFF\]\/30 {
+  background-color: rgba(0, 117, 222, 0.25) !important;
+}
+
+.notion-theme .border-\[\#355CFF\]\/20,
+.notion-theme .border-\[\#355CFF\]\/30 {
+  border-color: rgba(0, 117, 222, 0.15) !important;
+}
+
+/* Gradient overrides */
+.notion-theme .from-\[\#355CFF\].to-\[\#1E3BB3\],
+.notion-theme .from-\[\#355CFF\].to-\[\#6B7BFF\],
+.notion-theme [class*="from-[#355CFF]"] {
+  background-image: linear-gradient(135deg, #0075de 0%, #005bab 100%) !important;
+}
+
+/* White elements in dark mode mapped to primary accent */
+.notion-theme button.bg-white,
+.notion-theme .bg-white.text-black {
+  background-color: var(--primary) !important;
+  color: var(--primary-foreground) !important;
+  border-color: var(--primary) !important;
+}
+.notion-theme button.bg-white:hover,
+.notion-theme .bg-white.text-black:hover {
+  background-color: var(--primary-active) !important;
+}
+.notion-theme button.bg-white svg,
+.notion-theme .bg-white.text-black svg {
+  color: var(--primary-foreground) !important;
+}
+
+/* Translucent bg-white/x overlays mapped to black/x opacity in light theme */
+.notion-theme .bg-white\/\[0\.01\] { background-color: rgba(0, 0, 0, 0.01) !important; }
+.notion-theme .bg-white\/\[0\.02\] { background-color: rgba(0, 0, 0, 0.02) !important; }
+.notion-theme .bg-white\/\[0\.03\] { background-color: rgba(0, 0, 0, 0.03) !important; }
+.notion-theme .bg-white\/\[0\.04\] { background-color: rgba(0, 0, 0, 0.04) !important; }
+.notion-theme .bg-white\/\[0\.05\] { background-color: rgba(0, 0, 0, 0.05) !important; }
+.notion-theme .bg-white\/\[0\.06\] { background-color: rgba(0, 0, 0, 0.055) !important; }
+.notion-theme .bg-white\/\[0\.07\] { background-color: rgba(0, 0, 0, 0.07) !important; }
+.notion-theme .bg-white\/\[0\.08\] { background-color: rgba(0, 0, 0, 0.08) !important; }
+.notion-theme .bg-card\/5 { background-color: rgba(0, 0, 0, 0.035) !important; }
+
+/* Border color overrides */
+.notion-theme .border-white\/\[0\.04\],
+.notion-theme .border-white\/\[0\.05\],
+.notion-theme .border-white\/\[0\.06\],
+.notion-theme .border-white\/\[0\.08\],
+.notion-theme .border-white\/\[0\.12\],
+.notion-theme .border-white\/\[0\.15\],
+.notion-theme .border-white\/5,
+.notion-theme .border-white\/10,
+.notion-theme .border-white\/20,
+.notion-theme .border-white\/30,
+.notion-theme .border-zinc-800,
+.notion-theme .border-neutral-800 {
+  border-color: var(--border) !important;
+}
+
+/* Text opacity overrides */
+.notion-theme .text-white\/90 { color: var(--text-primary) !important; }
+.notion-theme .text-white\/80,
+.notion-theme .text-white\/75,
+.notion-theme .text-white\/70 {
+  color: var(--text-secondary) !important;
+}
+.notion-theme .text-white\/60,
+.notion-theme .text-white\/50 {
+  color: var(--text-muted) !important;
+}
+.notion-theme .text-white\/40,
+.notion-theme .text-white\/35,
+.notion-theme .text-white\/30,
+.notion-theme .text-white\/25,
+.notion-theme .text-white\/20,
+.notion-theme .text-white\/15 {
+  color: var(--text-tertiary) !important;
+}
+
+/* Checkbox alignment & style inside notion-theme */
+.notion-theme input[type="checkbox"] {
+  accent-color: var(--primary) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 3px !important;
+  background-color: #ffffff !important;
+}
+
+/* Input placeholder color helper */
+.notion-theme ::placeholder {
+  color: var(--text-tertiary) !important;
+}
+
+
+@layer base {
+  html, body {
+    overflow: visible;
+    max-width: 100%;
+    background-color: var(--background);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  img,
+  video,
+  canvas,
+  svg {
+    max-width: 100%;
+    display: block;
+  }
+
+  body {
+    color: var(--foreground);
+    font-family: var(--font-sans);
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-serif), serif;
+  }
+
+  .font-serif {
+    font-family: var(--font-serif), serif;
+  }
+
+  .font-lora {
+    font-family: var(--font-lora), serif;
+  }
+
+  .hand {
+    font-family: var(--font-serif), serif;
+    font-style: italic;
+    text-transform: uppercase;
+  }
+
+  .hand-A { letter-spacing: -0.04em; }
+  .hand-F { letter-spacing: -0.08em; }
+  .hand-H { letter-spacing: -0.06em; }
+  .hand-P { letter-spacing: -0.02em; }
+  .hand-S { letter-spacing: -0.04em; }
+  .hand-E { letter-spacing: -0.05em; }
+  .hand-M { letter-spacing: -0.05em; }
+
+  .dropcap {
+    font-size: 3.5rem;
+    font-family: var(--font-serif), serif;
+    font-style: italic;
+    line-height: 1;
+    float: left;
+    margin-right: 0.5rem;
+    margin-top: -0.2rem;
+  }
+}
+
+/* ═══════════════════════════════════════════════════ */
+/* SECTION SAFETY                                      */
+/* ═══════════════════════════════════════════════════ */
+section:not(.growx-sticky-viewport) {
+  position: relative !important;
+  overflow: hidden !important;
+  isolation: isolate !important;
+}
+
+/* ═══════════════════════════════════════════════════ */
+/* REMOVE GPU BREAKING EFFECTS                         */
+/* ═══════════════════════════════════════════════════ */
+.glass {
+  background-color: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.text-gradient {
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  background-image: linear-gradient(135deg, #1A1A1A 0%, #355CFF 78%, #2A4AD4 100%);
+}
+
+/* ═══════════════════════════════════════════════════ */
+/* CARD SAFETY & HOVER OVERRIDES                       */
+/* ═══════════════════════════════════════════════════ */
+.glass-card, 
+.growx-card, 
+[class*="card"] {
+  position: relative !important;
+  overflow: hidden !important;
+  transform: none !important;
+  transition: opacity 0.2s ease,
+              background-color 0.2s ease,
+              border-color 0.2s ease !important;
+}
+
+.glass-card:hover, 
+.growx-card:hover, 
+[class*="card"]:hover {
+  transform: none !important;
+  transition: opacity 0.2s ease,
+              background-color 0.2s ease,
+              border-color 0.2s ease !important;
+}
+
+.glass-card {
+  @apply rounded-lg p-8;
+  background-color: var(--card);
+  border: 1px solid var(--border);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 4px 12px rgba(0, 0, 0, 0.02);
+}
+
+/* GrowX Card System */
+.growx-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+}
+
+/* Dark mode card overrides */
+.dark .glass-card,
+.dark .growx-card {
+  background-color: var(--card);
+  border-color: var(--border);
+}
+
+.dark .text-gradient {
+  background-image: linear-gradient(135deg, #FFFFFF 0%, #355CFF 100%);
+}
+
+/* Removed float and scroll animations to optimize performance and prevent mobile paint glitches */
+
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* Default (Marketing): Light thumb for dark matte black background (#020202) */
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* Light Essay/Blog Pages: Dark thumb for warm white background (#FDFAF7) */
+.posts-page ::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.15);
+}
+
+.posts-page ::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.3);
+}
+
+/* Admin/Dashboard Dark Mode: Low opacity light thumb */
+.dark ::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+
+/* GrowX Layout System */
+.layout-container {
+  @apply w-full px-6 md:px-10 xl:px-16 2xl:px-24;
+}
+
+.layout-content {
+  @apply max-w-7xl xl:max-w-[1400px] 2xl:max-w-[1600px] mx-auto;
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.4s ease-out both;
+}
+
+/* Below-the-fold content stability reset */
+section:not(:first-of-type) {
+  /* Removed content-visibility to prevent mobile rendering glitches and duplicated layout paint issues */
+}
+
+/* Removed flicker and pulse-glow animations to ensure hardware acceleration stability on mobile */
+
+
+/* ═══════════════════════════════════════════════════ */
+/* IMAGE CONTAINERS SAFETY RULES                       */
+/* ═══════════════════════════════════════════════════ */
+.image-wrapper, 
+[class*="image-wrapper"], 
+[class*="img-container"] {
+  overflow: hidden !important;
+  border-radius: inherit !important;
+}
+
+.image-wrapper img, 
+[class*="image-wrapper"] img, 
+[class*="img-container"] img {
+  object-fit: cover !important;
+}
+
+/* ═══════════════════════════════════════════════════ */
+/* ABSOLUTE POSITION LIMITATION FOR WHITE STATIC FIX  */
+/* ═══════════════════════════════════════════════════ */
+*:not(html):not(body).absolute, 
+*:not(html):not(body)[class*="absolute"], 
+*:not(html):not(body)::before, 
+*:not(html):not(body)::after {
+  max-width: 100vw !important;
+}
+
+/* ═══════════════════════════════════════════════════ */
+/* MOBILE PERFORMANCE MODE                             */
+/* ═══════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  /* Disable animations and transitions */
+  *:not(.animate-flicker), 
+  *:not(.animate-flicker)::before, 
+  *:not(.animate-flicker)::after {
+    animation: none !important;
+    transition: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    filter: none !important;
+    mix-blend-mode: normal !important;
+    background-attachment: scroll !important;
+    will-change: auto !important;
+    transform: none !important;
+  }
+
+  /* Flat backgrounds only on mobile */
+  body, 
+  section, 
+  div, 
+  header, 
+  footer, 
+  nav, 
+  span, 
+  .glass, 
+  .glass-card, 
+  .growx-card {
+    background-image: none !important;
+    background-attachment: scroll !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+
+  body {
+    background-color: var(--background) !important;
+  }
+
+  /* Explicitly hide complex ThreeJS canvas containers on mobile */
+  canvas, 
+  [class*="canvas"],
+  .pointer-events-none.fixed.inset-0.-z-10,
+  .fixed.inset-0.-z-50.pointer-events-none {
+    display: none !important;
+  }
+
+  /* Flat border and shadow resets */
+  .glass-card, 
+  .growx-card, 
+  [class*="card"] {
+    box-shadow: none !important;
+    border: 1px solid var(--border) !important;
+    background-color: var(--card) !important;
+  }
+
+  .dark .glass-card, 
+  .dark .growx-card, 
+  .dark [class*="card"] {
+    background-color: var(--card) !important;
+    border-color: var(--border) !important;
+  }
+}
+
+/* ═══════════════════════════════════════════════════ */
+/* BLOG EDITORIAL TYPOGRAPHY SYSTEM                    */
+/* ═══════════════════════════════════════════════════ */
+
+/* Blog article sections need visible overflow for sticky TOC */
+.blog-article section {
+  overflow: visible !important;
+}
+
+.blog-article {
+  overflow: visible !important;
+}
+
+/* Premium reading prose container */
+.blog-prose {
+  font-feature-settings: "kern" 1, "liga" 1;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Premium Blog Typography Overrides */
+.posts-page main h1,
+.posts-page main h2,
+.posts-page main h3,
+.posts-page main h4,
+.posts-page main h5,
+.posts-page main h6,
+.posts-page main .font-serif {
+  font-family: var(--font-serif), Georgia, serif !important;
+}
+
+.posts-page main .blog-ui-heading {
+  font-family: var(--font-sans), Arial, sans-serif !important;
+}
+
+.posts-page main .font-lora {
+  font-family: var(--font-lora), Georgia, serif !important;
+}
+
+.blog-prose p {
+  font-size: 17px;
+  line-height: 1.9;
+  letter-spacing: -0.003em;
+  color: #D1D5DB;
+  margin-bottom: 1.5em;
+}
+
+.blog-prose h2 {
+  font-size: 28px;
+  font-weight: 900;
+  letter-spacing: -0.025em;
+  line-height: 1.2;
+  color: #FFFFFF;
+  margin-top: 3.5rem;
+  margin-bottom: 1.25rem;
+}
+
+.blog-prose h3 {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.3;
+  color: #FFFFFF;
+  margin-top: 2.5rem;
+  margin-bottom: 1rem;
+}
+
+.blog-prose ul,
+.blog-prose ol {
+  padding-left: 1.25em;
+  margin: 1.5em 0;
+}
+
+.blog-prose li {
+  font-size: 16px;
+  line-height: 1.85;
+  color: #D1D5DB;
+  padding-left: 0.5em;
+  margin-bottom: 0.6em;
+}
+
+.blog-prose li::marker {
+  color: var(--foreground);
+}
+
+.blog-prose blockquote {
+  margin: 2.5rem 0;
+  padding-left: 1.5rem;
+  border-left: 3px solid var(--foreground);
+  font-style: italic;
+  font-size: 20px;
+  color: #9CA3AF;
+  font-family: Georgia, "Times New Roman", serif;
+  line-height: 1.6;
+}
+
+.blog-prose strong {
+  font-weight: 700;
+  color: #FFFFFF;
+}
+
+.blog-prose a {
+  color: var(--foreground);
+  text-decoration: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+  transition: border-color 0.2s ease;
+}
+
+.blog-prose a:hover {
+  border-bottom-color: var(--foreground);
+}
+
+/* Smart layout overrides to bridge hardcoded class tags in old static markup */
+.posts-page footer,
+.posts-page [class*="bg-[#FDFAF7]"],
+.posts-page footer[class*="bg-[#FDFAF7]"] {
+  background-color: transparent !important;
+}
+
+.posts-page [class*="bg-[#EDEAE4]"] {
+  background-color: var(--secondary) !important;
+}
+
+.posts-page [class*="border-[#E5E2DC]"],
+.posts-page [class*="border-[#D1D5DB]"] {
+  border-color: var(--border) !important;
+}
+
+/* Force all header title text and subtitles to match the main white text color */
+.posts-page header h1 span.text-\[\#355CFF\],
+.posts-page header h1 span[class*="text-"],
+.posts-page header h2 span.text-\[\#355CFF\],
+.posts-page header h2 span[class*="text-"],
+.posts-page header h3 span.text-\[\#355CFF\],
+.posts-page header h3 span[class*="text-"] {
+  color: var(--foreground) !important;
+}
+
+/* Remove all hardcoded blue (#355CFF) colors and map them to white/grey/black on blog pages */
+.posts-page .text-\[\#355CFF\],
+.posts-page .text-\[\#355cff\],
+.posts-page .text-\[\#355CFF\]\/10,
+.posts-page .text-\[\#355cff\]\/10,
+.posts-page .text-primary {
+  color: var(--foreground) !important;
+}
+
+/* Dropcaps / First letter overrides */
+.posts-page .first-letter\:text-\[\#355CFF\]::first-letter,
+.posts-page .first-letter\:text-\[\#355cff\]::first-letter {
+  color: var(--foreground) !important;
+}
+
+.posts-page .bg-\[\#355CFF\],
+.posts-page .bg-\[\#355cff\],
+.posts-page .bg-primary {
+  background-color: var(--secondary) !important;
+}
+
+/* Specific badge text/background should be monochrome */
+.posts-page .bg-\[\#355CFF\]\/5,
+.posts-page .bg-\[\#355cff\]\/5,
+.posts-page .bg-primary\/5 {
+  background-color: rgba(255, 255, 255, 0.08) !important;
+  color: var(--foreground) !important;
+}
+
+.posts-page .border-\[\#355CFF\],
+.posts-page .border-\[\#355cff\],
+.posts-page .border-primary {
+  border-color: var(--border) !important;
+}
+
+/* Hover effects */
+.posts-page .hover\:border-\[\#355CFF\]:hover,
+.posts-page .group-hover\:text-\[\#355CFF\],
+.posts-page .group-hover\:bg-\[\#355CFF\],
+.posts-page .group-hover\:border-\[\#355CFF\] {
+  border-color: var(--foreground) !important;
+  color: var(--foreground) !important;
+}
+
+/* Reset group hover action backgrounds to secondary dark grey instead of bright blue */
+.posts-page .group-hover\:bg-\[\#355CFF\] {
+  background-color: var(--secondary) !important;
+}
+
+/* Blockquote border overrides to be high-contrast light grey/white */
+.posts-page blockquote {
+  border-left-color: var(--foreground) !important;
+}
+
+/* Premium selection color override for blog pages - pure grey/white selection */
+.posts-page *::selection,
+.posts-page ::selection {
+  background-color: rgba(255, 255, 255, 0.15) !important;
+  color: #FFFFFF !important;
+}
+
+/* Smooth scroll behavior for anchor links */
+html {
+  scroll-behavior: smooth;
+}
+
+/* ═══════════════════════════════════════════════════ */
+/* BLOG MOBILE REFINEMENTS (overrides generic resets)  */
+/* ═══════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  .blog-prose p {
+    font-size: 16px !important;
+    line-height: 1.85 !important;
+    margin-bottom: 1.25em !important;
+  }
+
+  .blog-prose h2 {
+    font-size: 24px !important;
+    margin-top: 2.5rem !important;
+    margin-bottom: 1rem !important;
+  }
+
+  .blog-prose h3 {
+    font-size: 20px !important;
+    margin-top: 2rem !important;
+  }
+
+  .blog-prose li {
+    font-size: 15px !important;
+    padding-left: 0.25em !important;
+    line-height: 1.8 !important;
+  }
+
+  .blog-prose blockquote {
+    font-size: 18px !important;
+    margin: 1.5rem 0 !important;
+    padding-left: 1rem !important;
+  }
+
+  .blog-prose ul,
+  .blog-prose ol {
+    padding-left: 1em !important;
+    margin: 1.25em 0 !important;
+  }
+}
+
+.lab-bg::before {
+  overflow: hidden;
+  max-width: 100vw;
+  max-height: 100vh;
+  box-sizing: border-box;
+}
+
+/* ═══════════════════════════════════════════════════ */
+/* VERCEL DARK THEME — Global color overrides         */
+/* ═══════════════════════════════════════════════════ */
+.dark .notion-theme table,
+.dark .notion-theme tbody {
+  background-color: var(--card) !important;
+}
+.dark .notion-theme tr {
+  background-color: transparent !important;
+}
+.dark .notion-theme .bg-white {
+  background-color: var(--card) !important;
+}
+.dark .notion-theme .bg-white\/40 {
+  background-color: rgba(14, 14, 14, 0.4) !important;
+}
+.dark .notion-theme .bg-\[\#f6f5f4\] {
+  background-color: var(--surface-2) !important;
+}
+.dark .notion-theme .bg-\[\#f6f5f4\]\/30 {
+  background-color: rgba(8, 8, 8, 0.3) !important;
+}
+.dark .notion-theme .bg-\[\#f6f5f4\]\/40 {
+  background-color: rgba(8, 8, 8, 0.4) !important;
+}
+.dark .notion-theme .hover\:bg-white\/40:hover {
+  background-color: rgba(14, 14, 14, 0.4) !important;
+}
+.dark .notion-theme .hover\:bg-white:hover {
+  background-color: var(--card) !important;
+}
+.dark .notion-theme .hover\:bg-\[\#f6f5f4\]:hover {
+  background-color: var(--surface-2) !important;
+}
+
+/* Borders overrides */
+.dark .notion-theme .border-\[\#e6e6e6\] {
+  border-color: var(--border-subtle) !important;
+}
+.dark .notion-theme .border-b.border-\[\#e6e6e6\] {
+  border-bottom-color: var(--border-subtle) !important;
+}
+.dark .notion-theme .border-t.border-\[\#e6e6e6\] {
+  border-top-color: var(--border-subtle) !important;
+}
+.dark .notion-theme .border-r.border-\[\#e6e6e6\] {
+  border-right-color: var(--border-subtle) !important;
+}
+.dark .notion-theme .border-l.border-\[\#e6e6e6\] {
+  border-left-color: var(--border-subtle) !important;
+}
+.dark .notion-theme .divide-\[\#e6e6e6\] > * + * {
+  border-color: var(--border-subtle) !important;
+}
+.dark .notion-theme .divide-y.divide-\[\#e6e6e6\] > * + * {
+  border-bottom-color: var(--border-subtle) !important;
+  border-top-color: var(--border-subtle) !important;
+}
+
+/* Text overrides */
+.dark .notion-theme .text-neutral-900,
+.dark .notion-theme .text-neutral-800 {
+  color: var(--text-primary) !important;
+}
+.dark .notion-theme .text-neutral-700,
+.dark .notion-theme .text-neutral-600 {
+  color: var(--text-secondary) !important;
+}
+.dark .notion-theme .text-neutral-500,
+.dark .notion-theme .text-neutral-400 {
+  color: var(--text-muted) !important;
+}
+.dark .notion-theme .text-\[\#615d59\] {
+  color: var(--text-secondary) !important;
+}
+.dark .notion-theme .text-\[\#a39e98\] {
+  color: var(--text-muted) !important;
+}
+.dark .notion-theme .text-\[\#31302e\] {
+  color: var(--text-primary) !important;
+}
+
+/* Hover overrides */
+.dark .notion-theme .hover\:text-neutral-950:hover,
+.dark .notion-theme .hover\:text-neutral-900:hover {
+  color: var(--text-primary) !important;
+}
+.dark .notion-theme .hover\:border-\[\#0075de\]\/30:hover {
+  border-color: rgba(0, 117, 222, 0.4) !important;
+}
+
+/* Inputs & Form controls override */
+.dark .notion-theme input,
+.dark .notion-theme textarea,
+.dark .notion-theme select {
+  background-color: var(--input) !important;
+  color: var(--text-primary) !important;
+  border-color: var(--border-subtle) !important;
+}
+.dark .notion-theme input::placeholder,
+.dark .notion-theme textarea::placeholder {
+  color: var(--text-muted) !important;
+  opacity: 0.7;
+}
+
+/* Modals & Dialogs (if nested in theme container) */
+.dark [role="dialog"],
+.dark .modal-content {
+  background-color: var(--card) !important;
+  color: var(--text-primary) !important;
+  border-color: var(--border-subtle) !important;
+}
+
+/* Activity Monitor specific */
+.dark .notion-theme .bg-purple-50 {
+  background-color: rgba(168, 85, 247, 0.1) !important;
+  color: rgb(192, 132, 252) !important;
+  border-color: rgba(168, 85, 247, 0.2) !important;
+}
+.dark .notion-theme .bg-emerald-50 {
+  background-color: rgba(16, 185, 129, 0.1) !important;
+  color: rgb(52, 211, 153) !important;
+  border-color: rgba(16, 185, 129, 0.2) !important;
+}
+.dark .notion-theme .bg-amber-50 {
+  background-color: rgba(245, 158, 11, 0.1) !important;
+  color: rgb(251, 191, 36) !important;
+  border-color: rgba(245, 158, 11, 0.2) !important;
+}
+.dark .notion-theme .bg-red-50 {
+  background-color: rgba(239, 68, 68, 0.1) !important;
+  color: rgb(248, 113, 113) !important;
+  border-color: rgba(239, 68, 68, 0.2) !important;
+}
+.dark .notion-theme .text-neutral-700 {
+  color: var(--text-secondary) !important;
+}
+.dark .notion-theme .hover\:bg-white\/40:hover {
+  background-color: rgba(255, 255, 255, 0.03) !important;
+}
+.dark .notion-theme .shadow-sm {
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.5) !important;
+}
+
+/* Force light mode styles on the editor canvas, regardless of app-shell dark mode */
+.dark .notion-theme .editor-canvas,
+.dark .notion-theme .editor-canvas * {
+  --text-primary: #000000 !important;
+  --text-secondary: #31302e !important;
+  --text-muted: #615d59 !important;
+  --foreground: #000000 !important;
+}
+
+.dark .notion-theme .editor-canvas .bg-white,
+.dark .notion-theme .editor-canvas.bg-white {
+  background-color: #ffffff !important;
+}
+
+.dark .notion-theme .editor-canvas .text-neutral-800 {
+  color: #1f2937 !important;
+}
+
+.dark .notion-theme .editor-canvas .text-neutral-700 {
+  color: #374151 !important;
+}
+
+.dark .notion-theme .editor-canvas .text-neutral-500 {
+  color: #6b7280 !important;
+}
+
+.dark .notion-theme .editor-canvas .text-black {
+  color: #000000 !important;
+}
+
+.dark .notion-theme .editor-canvas .bg-neutral-50\/50 {
+  background-color: rgba(249, 250, 251, 0.5) !important;
+}
+
+.dark .notion-theme .editor-canvas .border-neutral-100 {
+  border-color: #f3f4f6 !important;
+}
+
+.dark .notion-theme .editor-canvas .border-neutral-300 {
+  border-color: #d1d5db !important;
+}
+
+.dark .notion-theme .editor-canvas .bg-neutral-200 {
+  background-color: #e5e7eb !important;
+}
+
+
+
+
+.gxl-command-center {
+  --gxl-space-1: 0.25rem;
+  --gxl-space-2: 0.5rem;
+  --gxl-space-3: 0.75rem;
+  --gxl-space-4: 1rem;
+  --gxl-radius-sm: 0.375rem;
+  --gxl-radius-md: 0.5rem;
+  --gxl-radius-lg: 0.75rem;
+  --gxl-elevation-flyout: 0 20px 50px rgb(15 23 42 / 0.18);
+  --gxl-motion-fast: 140ms;
+  font-size: 1rem;
+}
+
+.gxl-command-center :where(button, a, textarea, input):focus-visible {
+  outline: 2px solid #0877d1;
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gxl-command-center *,
+  .gxl-command-center *::before,
+  .gxl-command-center *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+/* Operational form controls used by Admin OS workflows. */
+.input {
+  width: 100%;
+  min-height: 2.75rem;
+  border: 1px solid var(--border-subtle, #d7dce3);
+  border-radius: .5rem;
+  background: var(--surface-1, #fff);
+  padding: 0 .75rem;
+  color: var(--text-primary, #111827);
+  font-size: .75rem;
+  outline: none;
+}
+.input:focus { border-color: #0075de; box-shadow: 0 0 0 3px rgb(0 117 222 / 12%); }
+.muted { color: var(--text-muted, #64748b); text-transform: uppercase; font-size: .625rem; letter-spacing: .08em; }
+
+@media print {
+  @page { size: A4 portrait; margin: 14mm 13mm 16mm; }
+  body:has(.audit-document) { background: white !important; }
+  body:has(.audit-document) aside,
+  body:has(.audit-document) nav,
+  body:has(.audit-document) .no-print { display: none !important; }
+  body:has(.audit-document) main { margin: 0 !important; padding: 0 !important; max-width: none !important; }
+  .audit-document { width: 100% !important; border: 0 !important; box-shadow: none !important; }
+  .audit-document,
+  .audit-document * { visibility: visible !important; }
+  .audit-document { position: static !important; overflow: visible !important; color: #0f172a !important; }
+  .audit-section > div:first-child { break-after: avoid; page-break-after: avoid; }
+  .audit-block, .audit-document table tr { break-inside: avoid; page-break-inside: avoid; }
+  .audit-document header, .audit-document footer { break-inside: avoid; page-break-inside: avoid; }
+}
+
+/* ═══════════════════════════════════════════════════ */
+/* CLAUDE.AI COMMAND CENTER ISOLATION                  */
+/* ═══════════════════════════════════════════════════ */
+.gxl-command-center,
+.notion-theme .gxl-command-center {
+  background-color: #1f1e1d !important;
+  color: #edebe6 !important;
+  color-scheme: dark !important;
+}
+
+.gxl-command-center button,
+.notion-theme .gxl-command-center button,
+.notion-theme .gxl-command-center button[class*="border-white/"] {
+  background-color: transparent;
+  box-shadow: none;
+}
+
+.notion-theme .gxl-command-center button[class*="border-white/"] {
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+.notion-theme .gxl-command-center [class*="card"],
+.notion-theme .gxl-command-center .glass-card,
+.notion-theme .gxl-command-center .growx-card {
+  background-color: transparent !important;
+  border-color: #35332f !important;
+  box-shadow: none !important;
+}
+
+.notion-theme .gxl-command-center .bg-\[\#1f1e1d\],
+.gxl-command-center .bg-\[\#1f1e1d\] {
+  background-color: #1f1e1d !important;
+}
+
+.notion-theme .gxl-command-center .bg-\[\#1a1917\],
+.gxl-command-center .bg-\[\#1a1917\] {
+  background-color: #1a1917 !important;
+}
+
+.notion-theme .gxl-command-center .bg-\[\#2b2926\],
+.gxl-command-center .bg-\[\#2b2926\] {
+  background-color: #2b2926 !important;
+}
+
+.notion-theme .gxl-command-center .bg-\[\#242320\],
+.gxl-command-center .bg-\[\#242320\] {
+  background-color: #242320 !important;
+}
+
+.notion-theme .gxl-command-center .bg-\[\#2e2d2a\],
+.gxl-command-center .bg-\[\#2e2d2a\] {
+  background-color: #2e2d2a !important;
+}
+
+/* ═══════════════════════════════════════════════════ */
+/* EDITORIAL STUDIO DARK THEME ISOLATION               */
+/* ═══════════════════════════════════════════════════ */
+.gxl-studio-editor,
+.notion-theme .gxl-studio-editor {
+  color-scheme: dark !important;
+  background-color: #0e0f12 !important;
+  color: #f3f4f6 !important;
+}
+
+.gxl-studio-editor :where(button, input, select, aside, header, div),
+.notion-theme .gxl-studio-editor :where(button, input, select, aside, header, div) {
+  box-sizing: border-box;
+}
+
+.notion-theme .gxl-studio-editor button[class*="border-white/"],
+.notion-theme .gxl-studio-editor .button-utility {
+  background-color: transparent;
+  color: inherit;
+  border-radius: inherit;
+  box-shadow: none;
+}
+
+.notion-theme .gxl-studio-editor [class*="card"],
+.notion-theme .gxl-studio-editor .glass-card,
+.notion-theme .gxl-studio-editor .growx-card {
+  background-color: transparent !important;
+  box-shadow: none !important;
+}
+
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+
