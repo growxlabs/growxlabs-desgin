@@ -62,3 +62,7 @@ next-env.d.ts
 
 # temporary logs
 /tmp
+
+# Large media files
+*.mp4
+*_8k.*
